@@ -5,7 +5,7 @@ import { ProjectList } from '@/components/projects';
 import { GuardrailsPanel } from '@/components/guardrails';
 import { ContributorList, ContributorDetail, OnboardingWizard, ContributorWelcome } from '@/components/contributors';
 import { AgentsPanel } from '@/components/agents';
-import { AgreementRegistry, AccessTiersPanel, MVPChecklist, OperationalDesign, AuditLog } from '@/components/compliance';
+import { AgreementRegistry, AccessTiersPanel, MVPChecklist, MVPBuildOrder, OperationalDesign, AuditLog } from '@/components/compliance';
 import { EvaluationList, EvaluationDetail } from '@/components/evaluations';
 import { useIdeas } from '@/hooks/useIdeas';
 import { useProjects } from '@/hooks/useProjects';
@@ -16,7 +16,7 @@ import { useEvaluations } from '@/hooks/useEvaluations';
 import { Idea, Contributor, AccessTier, ContributorEvaluation } from '@/types/karma';
 import { useToast } from '@/hooks/use-toast';
 
-type View = 'ideas' | 'projects' | 'specs' | 'tasks' | 'team' | 'agents' | 'agreements' | 'tiers' | 'guardrails' | 'mvp' | 'design' | 'integrations' | 'audit' | 'evaluations';
+type View = 'ideas' | 'projects' | 'specs' | 'tasks' | 'team' | 'agents' | 'agreements' | 'tiers' | 'guardrails' | 'mvp' | 'build-order' | 'design' | 'integrations' | 'audit' | 'evaluations';
 type IdeaView = 'list' | 'wizard' | 'detail';
 type TeamView = 'list' | 'onboarding' | 'detail';
 type EvaluationView = 'list' | 'detail';
@@ -159,6 +159,15 @@ const Index = () => {
 
     if (currentView === 'design') {
       return <OperationalDesign />;
+    }
+
+    if (currentView === 'build-order') {
+      return (
+        <>
+          <PageHeader title="MVP Build Order" description="Step-by-step execution plan for KarmaOS" />
+          <MVPBuildOrder />
+        </>
+      );
     }
 
     if (currentView === 'audit') {
