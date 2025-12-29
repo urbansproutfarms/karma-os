@@ -5,7 +5,7 @@ import { ProjectList } from '@/components/projects';
 import { GuardrailsPanel } from '@/components/guardrails';
 import { ContributorList, ContributorDetail, OnboardingWizard, ContributorWelcome } from '@/components/contributors';
 import { AgentsPanel } from '@/components/agents';
-import { AgreementRegistry, AccessTiersPanel, MVPChecklist } from '@/components/compliance';
+import { AgreementRegistry, AccessTiersPanel, MVPChecklist, OperationalDesign } from '@/components/compliance';
 import { useIdeas } from '@/hooks/useIdeas';
 import { useProjects } from '@/hooks/useProjects';
 import { useContributors } from '@/hooks/useContributors';
@@ -13,7 +13,7 @@ import { useAgents } from '@/hooks/useAgents';
 import { Idea, Contributor, AccessTier } from '@/types/karma';
 import { useToast } from '@/hooks/use-toast';
 
-type View = 'ideas' | 'projects' | 'specs' | 'tasks' | 'team' | 'agents' | 'agreements' | 'tiers' | 'guardrails' | 'mvp';
+type View = 'ideas' | 'projects' | 'specs' | 'tasks' | 'team' | 'agents' | 'agreements' | 'tiers' | 'guardrails' | 'mvp' | 'design' | 'integrations';
 type IdeaView = 'list' | 'wizard' | 'detail';
 type TeamView = 'list' | 'onboarding' | 'detail';
 
@@ -138,6 +138,19 @@ const Index = () => {
           <GuardrailsPanel />
         </>
       );
+    }
+
+    if (currentView === 'agreements') {
+      return (
+        <>
+          <PageHeader title="Agreement Registry" description="Legal agreement templates and versions" />
+          <AgreementRegistry />
+        </>
+      );
+    }
+
+    if (currentView === 'design') {
+      return <OperationalDesign />;
     }
 
     return (
