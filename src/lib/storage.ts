@@ -8,6 +8,10 @@ const STORAGE_KEYS = {
   TASKS: 'karmaos_tasks',
   ACTIVITY: 'karmaos_activity',
   USER: 'karmaos_user',
+  CONTRIBUTORS: 'karmaos_contributors',
+  AGREEMENTS: 'karmaos_agreements',
+  AGENT_ACTIONS: 'karmaos_agent_actions',
+  GUARDRAILS: 'karmaos_guardrails',
 } as const;
 
 export function getStorageItem<T>(key: string): T | null {

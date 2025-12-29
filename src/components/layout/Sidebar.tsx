@@ -26,10 +26,10 @@ const navigation = [
   { id: 'projects', label: 'Projects', icon: FolderKanban },
   { id: 'specs', label: 'Specs', icon: FileText },
   { id: 'tasks', label: 'Tasks', icon: CheckSquare },
-  { id: 'team', label: 'Team', icon: Users },
+  { id: 'team', label: 'Contributors', icon: Users },
+  { id: 'agents', label: 'AI Agents', icon: Settings },
   { id: 'integrations', label: 'Integrations', icon: Link2 },
   { id: 'guardrails', label: 'Guardrails', icon: Shield },
-  { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
 export function Sidebar({ currentView, onViewChange, onNewIdea }: SidebarProps) {
