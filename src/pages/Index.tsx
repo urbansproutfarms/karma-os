@@ -5,15 +5,16 @@ import { ProjectList } from '@/components/projects';
 import { GuardrailsPanel } from '@/components/guardrails';
 import { ContributorList, ContributorDetail, OnboardingWizard, ContributorWelcome } from '@/components/contributors';
 import { AgentsPanel } from '@/components/agents';
-import { AgreementRegistry, AccessTiersPanel, MVPChecklist, OperationalDesign } from '@/components/compliance';
+import { AgreementRegistry, AccessTiersPanel, MVPChecklist, OperationalDesign, AuditLog } from '@/components/compliance';
 import { useIdeas } from '@/hooks/useIdeas';
 import { useProjects } from '@/hooks/useProjects';
 import { useContributors } from '@/hooks/useContributors';
 import { useAgents } from '@/hooks/useAgents';
+import { useAuditLog } from '@/hooks/useAuditLog';
 import { Idea, Contributor, AccessTier } from '@/types/karma';
 import { useToast } from '@/hooks/use-toast';
 
-type View = 'ideas' | 'projects' | 'specs' | 'tasks' | 'team' | 'agents' | 'agreements' | 'tiers' | 'guardrails' | 'mvp' | 'design' | 'integrations';
+type View = 'ideas' | 'projects' | 'specs' | 'tasks' | 'team' | 'agents' | 'agreements' | 'tiers' | 'guardrails' | 'mvp' | 'design' | 'integrations' | 'audit';
 type IdeaView = 'list' | 'wizard' | 'detail';
 type TeamView = 'list' | 'onboarding' | 'detail';
 
@@ -28,6 +29,7 @@ const Index = () => {
   const { projects } = useProjects();
   const { contributors, addContributor, sendAgreements, signAgreement, provisionAccess, revokeAccess, archiveContributor, getContributorAgreements } = useContributors();
   const { agents, getPendingActions, approveAction, rejectAction } = useAgents();
+  const { logs, logActivity } = useAuditLog();
   const { toast } = useToast();
 
   const handleNewIdea = () => {
@@ -151,6 +153,15 @@ const Index = () => {
 
     if (currentView === 'design') {
       return <OperationalDesign />;
+    }
+
+    if (currentView === 'audit') {
+      return (
+        <>
+          <PageHeader title="Audit Log" description="Immutable record of all system actions" />
+          <AuditLog logs={logs} />
+        </>
+      );
     }
 
     return (
