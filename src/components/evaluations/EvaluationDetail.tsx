@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ContributorEvaluation, RUBRIC_CATEGORIES, RubricCategory, EvaluationDecision, ACCESS_TIER_NAMES, AccessTier } from '@/types/karma';
+import { ContributorEvaluation, RUBRIC_CATEGORIES, RubricCategory, EvaluationDecision, ScoringTag } from '@/types/karma';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,8 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScoringTags } from './ScoringTags';
 import { 
   ArrowLeft, 
   Bot, 
@@ -32,6 +32,8 @@ interface EvaluationDetailProps {
   onBack: () => void;
   onUpdateScore: (category: RubricCategory, score: number, notes?: string) => void;
   onAcknowledgeFlag: (flagId: string) => void;
+  onConfirmTag: (tag: ScoringTag) => void;
+  onRemoveTag: (tag: ScoringTag) => void;
   onMakeDecision: (
     decision: EvaluationDecision,
     notes?: string,
@@ -60,6 +62,8 @@ export function EvaluationDetail({
   onBack,
   onUpdateScore,
   onAcknowledgeFlag,
+  onConfirmTag,
+  onRemoveTag,
   onMakeDecision,
 }: EvaluationDetailProps) {
   const [decisionNotes, setDecisionNotes] = useState(evaluation.decisionNotes || '');
@@ -127,6 +131,14 @@ export function EvaluationDetail({
             </div>
           </CardContent>
         </Card>
+
+        {/* Scoring Tags */}
+        <ScoringTags
+          tags={evaluation.tags || []}
+          isFinalized={evaluation.isFinalized}
+          onConfirmTag={onConfirmTag}
+          onRemoveTag={onRemoveTag}
+        />
 
         {/* AI Summary */}
         {evaluation.aiSummary && (

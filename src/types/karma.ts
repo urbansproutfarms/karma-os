@@ -16,6 +16,41 @@ export type WorkflowStage = 'intake' | 'evaluation' | 'documents' | 'signing' | 
 export type EvaluationDecision = 'pending' | 'approved' | 'conditional' | 'declined' | 'paused';
 export type RubricCategory = 'skills_alignment' | 'communication' | 'availability' | 'portfolio_quality' | 'culture_fit' | 'risk_assessment';
 
+// Scoring Tags
+export type FitTag = 'fit:strong' | 'fit:conditional' | 'fit:weak';
+export type RiskTag = 'risk:none' | 'risk:ip' | 'risk:scope' | 'risk:reliability' | 'risk:communication';
+export type ReadinessTag = 'ready:sign' | 'ready:clarify' | 'ready:pause' | 'ready:decline';
+export type ScoringTag = FitTag | RiskTag | ReadinessTag;
+
+export const SCORING_TAGS = {
+  fit: {
+    'fit:strong': { label: 'Strong Fit', description: 'Excellent match for role requirements', color: 'success' },
+    'fit:conditional': { label: 'Conditional Fit', description: 'Good potential with specific caveats', color: 'warning' },
+    'fit:weak': { label: 'Weak Fit', description: 'Significant gaps in role alignment', color: 'destructive' },
+  },
+  risk: {
+    'risk:none': { label: 'No Risk', description: 'No concerns identified', color: 'success' },
+    'risk:ip': { label: 'IP Risk', description: 'Potential intellectual property concerns', color: 'destructive' },
+    'risk:scope': { label: 'Scope Risk', description: 'May struggle with scope boundaries', color: 'warning' },
+    'risk:reliability': { label: 'Reliability Risk', description: 'Availability or commitment concerns', color: 'warning' },
+    'risk:communication': { label: 'Communication Risk', description: 'Response quality or clarity concerns', color: 'warning' },
+  },
+  readiness: {
+    'ready:sign': { label: 'Ready to Sign', description: 'Proceed to agreement signing', color: 'success' },
+    'ready:clarify': { label: 'Needs Clarification', description: 'Follow-up questions required', color: 'info' },
+    'ready:pause': { label: 'Paused', description: 'Hold for future consideration', color: 'muted' },
+    'ready:decline': { label: 'Decline', description: 'Do not proceed', color: 'destructive' },
+  },
+} as const;
+
+export interface EvaluationTag {
+  tag: ScoringTag;
+  aiSuggested: boolean;
+  confirmedByFounder: boolean;
+  confirmedAt?: string;
+  notes?: string;
+}
+
 export const RUBRIC_CATEGORIES: Record<RubricCategory, { label: string; description: string; weight: number }> = {
   skills_alignment: { label: 'Skills Alignment', description: 'Match between stated skills and role requirements', weight: 25 },
   communication: { label: 'Communication', description: 'Clarity, responsiveness, and professionalism in responses', weight: 20 },
@@ -250,6 +285,8 @@ export interface ContributorEvaluation {
   // Rubric scores
   scores: RubricScore[];
   overallScore: number; // Weighted average
+  // Scoring Tags
+  tags: EvaluationTag[];
   // AI-generated content
   aiSummary?: string;
   aiStrengths?: string[];
