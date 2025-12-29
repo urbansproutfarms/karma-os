@@ -10,7 +10,20 @@ export type ProjectStatus = 'active' | 'paused' | 'completed' | 'archived';
 export type ContributorRoleType = 'product_ops' | 'technical' | 'design_ux';
 export type EngagementType = 'contract' | 'trial' | 'unpaid';
 export type AgreementStatus = 'not_sent' | 'sent' | 'pending_signature' | 'signed' | 'revoked' | 'expired';
-export type WorkflowStage = 'intake' | 'documents' | 'signing' | 'provisioning' | 'ready' | 'working' | 'exit' | 'archived';
+export type WorkflowStage = 'intake' | 'evaluation' | 'documents' | 'signing' | 'provisioning' | 'ready' | 'working' | 'exit' | 'archived';
+
+// Evaluation Types
+export type EvaluationDecision = 'pending' | 'approved' | 'conditional' | 'declined' | 'paused';
+export type RubricCategory = 'skills_alignment' | 'communication' | 'availability' | 'portfolio_quality' | 'culture_fit' | 'risk_assessment';
+
+export const RUBRIC_CATEGORIES: Record<RubricCategory, { label: string; description: string; weight: number }> = {
+  skills_alignment: { label: 'Skills Alignment', description: 'Match between stated skills and role requirements', weight: 25 },
+  communication: { label: 'Communication', description: 'Clarity, responsiveness, and professionalism in responses', weight: 20 },
+  availability: { label: 'Availability', description: 'Alignment with project timelines and commitment level', weight: 15 },
+  portfolio_quality: { label: 'Portfolio Quality', description: 'Quality and relevance of previous work samples', weight: 20 },
+  culture_fit: { label: 'Culture Fit', description: 'Alignment with Clearpath values and working style', weight: 10 },
+  risk_assessment: { label: 'Risk Assessment', description: 'Potential red flags or concerns identified', weight: 10 },
+};
 
 // Access Tier Types (0-3)
 export type AccessTier = 0 | 1 | 2 | 3;
@@ -204,9 +217,61 @@ export interface OnboardingChecklist {
 export interface ActivityLog {
   id: string;
   action: string;
-  entityType: 'idea' | 'project' | 'spec' | 'task' | 'contributor' | 'agreement' | 'agent_action';
+  entityType: 'idea' | 'project' | 'spec' | 'task' | 'contributor' | 'agreement' | 'agent_action' | 'evaluation';
   entityId: string;
   userId: string;
   timestamp: string;
   details?: Record<string, unknown>;
+}
+
+// Contributor Evaluation Types
+export interface RubricScore {
+  category: RubricCategory;
+  score: number; // 1-5 scale
+  notes?: string;
+  aiSuggested?: boolean;
+}
+
+export interface RiskFlag {
+  id: string;
+  category: string;
+  severity: 'low' | 'medium' | 'high';
+  description: string;
+  aiGenerated: boolean;
+  acknowledged: boolean;
+  acknowledgedAt?: string;
+}
+
+export interface ContributorEvaluation {
+  id: string;
+  contributorId: string;
+  roleAppliedFor: ContributorRoleType;
+  questionnaireResponseId?: string;
+  // Rubric scores
+  scores: RubricScore[];
+  overallScore: number; // Weighted average
+  // AI-generated content
+  aiSummary?: string;
+  aiStrengths?: string[];
+  aiConcerns?: string[];
+  riskFlags: RiskFlag[];
+  // Founder decision
+  decision: EvaluationDecision;
+  decisionNotes?: string;
+  decisionTimestamp?: string;
+  decisionBy?: string;
+  // Conditional follow-up
+  conditionalRequirements?: string;
+  conditionalDeadline?: string;
+  // Metadata
+  isFinalized: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QuestionnaireResponse {
+  id: string;
+  contributorId: string;
+  responses: Record<string, string>;
+  submittedAt: string;
 }
