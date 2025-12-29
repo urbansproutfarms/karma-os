@@ -11,7 +11,8 @@ import {
   Menu,
   X,
   Scale,
-  BookOpen
+  BookOpen,
+  Activity
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -31,6 +32,7 @@ const navigation = [
   { id: 'team', label: 'Contributors', icon: Users },
   { id: 'agents', label: 'AI Agents', icon: Settings },
   { id: 'agreements', label: 'Agreements', icon: Scale },
+  { id: 'audit', label: 'Audit Log', icon: Activity },
   { id: 'design', label: 'Operational Design', icon: BookOpen },
   { id: 'integrations', label: 'Integrations', icon: Link2 },
   { id: 'guardrails', label: 'Guardrails', icon: Shield },

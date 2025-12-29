@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
   SPECS: 'karmaos_specs',
   TASKS: 'karmaos_tasks',
   ACTIVITY: 'karmaos_activity',
+  ACTIVITY_LOG: 'karmaos_activity_log',
   USER: 'karmaos_user',
   CONTRIBUTORS: 'karmaos_contributors',
   AGREEMENTS: 'karmaos_agreements',

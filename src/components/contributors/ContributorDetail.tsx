@@ -148,10 +148,15 @@ export function ContributorDetail({
         </CardContent>
       </Card>
 
-      {/* Agreements */}
+      {/* Agreements - Wyoming Jurisdiction */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Legal Agreements</CardTitle>
+          <div>
+            <CardTitle className="text-base">Legal Agreements</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Governed by Wyoming Revised Statutes • Clearpath Technologies LLC
+            </p>
+          </div>
           {canSendAgreements && (
             <Button size="sm" onClick={onSendAgreements} className="gap-2">
               <Send className="h-4 w-4" />
@@ -160,6 +165,16 @@ export function ContributorDetail({
           )}
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Compliance Warning */}
+          {contributor.ndaStatus !== 'signed' || contributor.ipAssignmentStatus !== 'signed' ? (
+            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+              <div className="text-sm">
+                <p className="font-medium text-amber-600 dark:text-amber-400">Agreements Required</p>
+                <p className="text-muted-foreground">No task assignment, repo access, or work submission permitted until both NDA and IP Assignment are signed.</p>
+              </div>
+            </div>
+          ) : null}
           {/* NDA */}
           <div className="flex items-center justify-between p-4 bg-accent rounded-lg">
             <div className="flex items-center gap-3">
