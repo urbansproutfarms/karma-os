@@ -10,7 +10,7 @@ import { ArrowLeft, ArrowRight, User, Briefcase, FileText, CheckCircle } from 'l
 import { cn } from '@/lib/utils';
 
 interface OnboardingWizardProps {
-  onSubmit: (data: Omit<Contributor, 'id' | 'createdAt' | 'updatedAt' | 'accessLevel' | 'workflowStage' | 'ndaStatus' | 'ipAssignmentStatus' | 'agreementVersion'>) => void;
+  onSubmit: (data: Omit<Contributor, 'id' | 'createdAt' | 'updatedAt' | 'accessTier' | 'workflowStage' | 'ndaStatus' | 'ipAssignmentStatus' | 'agreementVersion'>) => void;
   onCancel: () => void;
 }
 

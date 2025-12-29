@@ -1,4 +1,4 @@
-import { Contributor } from '@/types/karma';
+import { Contributor, ACCESS_TIER_NAMES } from '@/types/karma';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -21,25 +21,26 @@ const engagementLabels = {
   unpaid: 'Unpaid',
 };
 
-const statusConfig = {
+const statusConfig: Record<string, { icon: typeof Clock; label: string; className: string }> = {
   not_sent: { icon: Clock, label: 'Not Sent', className: 'text-muted-foreground' },
   sent: { icon: Clock, label: 'Pending', className: 'text-warning' },
+  pending_signature: { icon: Clock, label: 'Awaiting', className: 'text-warning' },
   signed: { icon: CheckCircle, label: 'Signed', className: 'text-success' },
   revoked: { icon: XCircle, label: 'Revoked', className: 'text-destructive' },
   expired: { icon: AlertCircle, label: 'Expired', className: 'text-destructive' },
 };
 
-const accessConfig = {
-  none: { label: 'No Access', className: 'bg-muted text-muted-foreground' },
-  limited: { label: 'Limited', className: 'bg-warning/10 text-warning' },
-  active: { label: 'Active', className: 'bg-success/10 text-success' },
-  revoked: { label: 'Revoked', className: 'bg-destructive/10 text-destructive' },
+const tierConfig: Record<number, { label: string; className: string }> = {
+  0: { label: 'Tier 0', className: 'bg-muted text-muted-foreground' },
+  1: { label: 'Tier 1', className: 'bg-warning/10 text-warning' },
+  2: { label: 'Tier 2', className: 'bg-info/10 text-info' },
+  3: { label: 'Tier 3', className: 'bg-success/10 text-success' },
 };
 
 export function ContributorCard({ contributor, onClick }: ContributorCardProps) {
-  const ndaStatus = statusConfig[contributor.ndaStatus];
-  const ipStatus = statusConfig[contributor.ipAssignmentStatus];
-  const access = accessConfig[contributor.accessLevel];
+  const ndaStatus = statusConfig[contributor.ndaStatus] || statusConfig.not_sent;
+  const ipStatus = statusConfig[contributor.ipAssignmentStatus] || statusConfig.not_sent;
+  const tier = tierConfig[contributor.accessTier] || tierConfig[0];
   const NdaIcon = ndaStatus.icon;
   const IpIcon = ipStatus.icon;
 
@@ -67,7 +68,10 @@ export function ContributorCard({ contributor, onClick }: ContributorCardProps) 
               </div>
             </div>
           </div>
-          <Badge className={access.className}>{access.label}</Badge>
+          <div className="text-right">
+            <Badge className={tier.className}>{tier.label}</Badge>
+            <p className="text-xs text-muted-foreground mt-1">{ACCESS_TIER_NAMES[contributor.accessTier]}</p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 mb-3">

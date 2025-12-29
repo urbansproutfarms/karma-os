@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Contributor, Agreement } from '@/types/karma';
+import { Contributor, Agreement, ACCESS_TIER_NAMES, AccessTier } from '@/types/karma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   ArrowLeft, 
   User, 
@@ -28,7 +28,7 @@ interface ContributorDetailProps {
   onBack: () => void;
   onSendAgreements: () => void;
   onSignAgreement: (agreementId: string) => void;
-  onProvisionAccess: () => void;
+  onProvisionAccess: (tier?: AccessTier) => void;
   onRevokeAccess: (reason: string) => void;
   onArchive: () => void;
 }
@@ -44,6 +44,13 @@ const stageLabels: Record<string, { label: string; description: string }> = {
   archived: { label: 'Archived', description: 'Record archived' },
 };
 
+const tierDescriptions: Record<AccessTier, string> = {
+  0: 'No systems, tasks, or IP exposure',
+  1: 'View assigned specs, submit work, no repo access',
+  2: 'Limited repo access, no admin or cross-project',
+  3: 'Update statuses, prepare summaries, no approvals',
+};
+
 export function ContributorDetail({
   contributor,
   agreements,
@@ -56,14 +63,15 @@ export function ContributorDetail({
 }: ContributorDetailProps) {
   const [revokeReason, setRevokeReason] = useState('');
   const [showRevokeForm, setShowRevokeForm] = useState(false);
+  const [selectedTier, setSelectedTier] = useState<AccessTier>(1);
 
   const ndaAgreement = agreements.find(a => a.type === 'nda');
   const ipAgreement = agreements.find(a => a.type === 'ip_assignment');
   const canSendAgreements = contributor.ndaStatus === 'not_sent';
   const canProvision = contributor.ndaStatus === 'signed' && 
                        contributor.ipAssignmentStatus === 'signed' && 
-                       contributor.accessLevel !== 'active';
-  const canRevoke = contributor.accessLevel === 'active' || contributor.accessLevel === 'limited';
+                       contributor.accessTier === 0;
+  const canRevoke = contributor.accessTier > 0;
   const canArchive = contributor.workflowStage === 'exit';
 
   const stage = stageLabels[contributor.workflowStage];
@@ -96,15 +104,28 @@ export function ContributorDetail({
             </div>
             <div className="text-right">
               <Badge className={cn(
-                contributor.accessLevel === 'active' && 'bg-success/10 text-success',
-                contributor.accessLevel === 'limited' && 'bg-warning/10 text-warning',
-                contributor.accessLevel === 'revoked' && 'bg-destructive/10 text-destructive',
-                contributor.accessLevel === 'none' && 'bg-muted text-muted-foreground'
+                contributor.accessTier === 0 && 'bg-muted text-muted-foreground',
+                contributor.accessTier === 1 && 'bg-warning/10 text-warning',
+                contributor.accessTier === 2 && 'bg-info/10 text-info',
+                contributor.accessTier === 3 && 'bg-success/10 text-success'
               )}>
-                {contributor.accessLevel.toUpperCase()}
+                Tier {contributor.accessTier}
               </Badge>
-              <p className="text-sm text-muted-foreground mt-1">{stage.label}</p>
+              <p className="text-sm text-muted-foreground mt-1">{ACCESS_TIER_NAMES[contributor.accessTier]}</p>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Access Tier Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Access Tier Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="p-3 bg-accent rounded-lg">
+            <p className="font-medium">Tier {contributor.accessTier}: {ACCESS_TIER_NAMES[contributor.accessTier]}</p>
+            <p className="text-sm text-muted-foreground">{tierDescriptions[contributor.accessTier]}</p>
           </div>
         </CardContent>
       </Card>
@@ -224,10 +245,23 @@ export function ContributorDetail({
         </CardHeader>
         <CardContent className="space-y-4">
           {canProvision && (
-            <Button onClick={onProvisionAccess} className="w-full gap-2">
-              <Unlock className="h-4 w-4" />
-              Provision Full Access
-            </Button>
+            <div className="space-y-3 p-4 bg-accent rounded-lg">
+              <p className="font-medium">Provision Access</p>
+              <Select value={String(selectedTier)} onValueChange={(v) => setSelectedTier(Number(v) as AccessTier)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Tier 1 - Limited Contributor</SelectItem>
+                  <SelectItem value="2">Tier 2 - Scoped Technical</SelectItem>
+                  <SelectItem value="3">Tier 3 - Ops / Coordination</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button onClick={() => onProvisionAccess(selectedTier)} className="w-full gap-2">
+                <Unlock className="h-4 w-4" />
+                Provision Tier {selectedTier} Access
+              </Button>
+            </div>
           )}
 
           {canRevoke && !showRevokeForm && (
