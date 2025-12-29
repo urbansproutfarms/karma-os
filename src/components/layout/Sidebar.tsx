@@ -9,7 +9,9 @@ import {
   Shield,
   Plus,
   Menu,
-  X
+  X,
+  Scale,
+  BookOpen
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -28,6 +30,8 @@ const navigation = [
   { id: 'tasks', label: 'Tasks', icon: CheckSquare },
   { id: 'team', label: 'Contributors', icon: Users },
   { id: 'agents', label: 'AI Agents', icon: Settings },
+  { id: 'agreements', label: 'Agreements', icon: Scale },
+  { id: 'design', label: 'Operational Design', icon: BookOpen },
   { id: 'integrations', label: 'Integrations', icon: Link2 },
   { id: 'guardrails', label: 'Guardrails', icon: Shield },
 ];
@@ -111,7 +115,10 @@ export function Sidebar({ currentView, onViewChange, onNewIdea }: SidebarProps) 
         {/* Footer */}
         <div className="p-4 border-t border-sidebar-border">
           <p className="text-xs text-muted-foreground">
-            Clearpath Technologies
+            Clearpath Technologies LLC
+          </p>
+          <p className="text-xs text-muted-foreground/60">
+            Wyoming
           </p>
         </div>
       </aside>
