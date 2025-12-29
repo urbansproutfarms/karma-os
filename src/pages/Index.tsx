@@ -7,22 +7,24 @@ import { ContributorList, ContributorDetail, OnboardingWizard, ContributorWelcom
 import { AgentsPanel } from '@/components/agents';
 import { AgreementRegistry, AccessTiersPanel, MVPChecklist, MVPBuildOrder, OperationalDesign, AuditLog } from '@/components/compliance';
 import { EvaluationList, EvaluationDetail } from '@/components/evaluations';
+import { AppList } from '@/components/apps';
 import { useIdeas } from '@/hooks/useIdeas';
 import { useProjects } from '@/hooks/useProjects';
 import { useContributors } from '@/hooks/useContributors';
 import { useAgents } from '@/hooks/useAgents';
 import { useAuditLog } from '@/hooks/useAuditLog';
 import { useEvaluations } from '@/hooks/useEvaluations';
+import { useApps } from '@/hooks/useApps';
 import { Idea, Contributor, AccessTier, ContributorEvaluation } from '@/types/karma';
 import { useToast } from '@/hooks/use-toast';
 
-type View = 'ideas' | 'projects' | 'specs' | 'tasks' | 'team' | 'agents' | 'agreements' | 'tiers' | 'guardrails' | 'mvp' | 'build-order' | 'design' | 'integrations' | 'audit' | 'evaluations';
+type View = 'ideas' | 'projects' | 'specs' | 'tasks' | 'team' | 'agents' | 'agreements' | 'tiers' | 'guardrails' | 'mvp' | 'build-order' | 'design' | 'integrations' | 'audit' | 'evaluations' | 'apps';
 type IdeaView = 'list' | 'wizard' | 'detail';
 type TeamView = 'list' | 'onboarding' | 'detail';
 type EvaluationView = 'list' | 'detail';
 
 const Index = () => {
-  const [currentView, setCurrentView] = useState<View>('ideas');
+  const [currentView, setCurrentView] = useState<View>('apps');
   const [ideaView, setIdeaView] = useState<IdeaView>('list');
   const [teamView, setTeamView] = useState<TeamView>('list');
   const [evalView, setEvalView] = useState<EvaluationView>('list');
@@ -36,6 +38,7 @@ const Index = () => {
   const { agents, getPendingActions, approveAction, rejectAction } = useAgents();
   const { logs, logActivity } = useAuditLog();
   const { evaluations, updateScore, acknowledgeRiskFlag, makeDecision, confirmTag, removeTag, getContributorQuestionnaire } = useEvaluations();
+  const { apps, createApp, runAgentReview, makeFounderDecision, setActiveApp, confirmOwnership, acknowledgeFlag, canProceedToBuild, getActiveApp } = useApps();
   const { toast } = useToast();
 
   const handleNewIdea = () => {
@@ -208,6 +211,36 @@ const Index = () => {
             onEvaluationClick={(e) => { setSelectedEvaluation(e); setEvalView('detail'); }}
           />
         </>
+      );
+    }
+
+    if (currentView === 'apps') {
+      return (
+        <AppList
+          apps={apps}
+          onCreateApp={(data) => { createApp(data); toast({ title: 'App registered', description: 'Run agent review to proceed.' }); }}
+          onRunAgentReview={(id) => { runAgentReview(id); toast({ title: 'Agent review complete' }); }}
+          onMakeDecision={(id, decision, notes) => { 
+            try {
+              makeFounderDecision(id, decision, notes); 
+              toast({ title: `App ${decision}` }); 
+            } catch (e) {
+              toast({ title: 'Error', description: (e as Error).message, variant: 'destructive' });
+            }
+          }}
+          onSetActive={(id) => { 
+            try {
+              setActiveApp(id); 
+              toast({ title: 'App activated' }); 
+            } catch (e) {
+              toast({ title: 'Error', description: (e as Error).message, variant: 'destructive' });
+            }
+          }}
+          onConfirmOwnership={(id, repoUrl) => { confirmOwnership(id, repoUrl); toast({ title: 'Ownership confirmed' }); }}
+          onAcknowledgeFlag={(id, flagId, reviewType) => { acknowledgeFlag(id, flagId, reviewType); }}
+          canProceedToBuild={canProceedToBuild}
+          getActiveApp={getActiveApp}
+        />
       );
     }
 

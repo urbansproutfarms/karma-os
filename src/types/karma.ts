@@ -249,10 +249,61 @@ export interface OnboardingChecklist {
   readyToWork: boolean;
 }
 
+// App Governance Types
+export type AppOrigin = 'lovable' | 'rork' | 'google_ai_studio' | 'chat' | 'manual' | 'other';
+export type AppStatus = 'unreviewed' | 'in_review' | 'approved' | 'paused' | 'killed';
+
+export interface AppIntake {
+  id: string;
+  name: string;
+  origin: AppOrigin;
+  description: string;
+  intendedUser: string;
+  mvpScope: string;
+  nonGoals: string;
+  riskNotes: string;
+  status: AppStatus;
+  isActive: boolean; // Only ONE app can be active at a time
+  // IP & Ownership
+  ownerConfirmed: boolean;
+  ownerEntity: string; // Default: "Clearpath Technologies LLC"
+  repoUrl?: string;
+  assetOwnershipConfirmed: boolean;
+  // Agent Review
+  agentReviewComplete: boolean;
+  productSpecReview?: AppAgentReview;
+  riskIntegrityReview?: AppAgentReview;
+  // Founder Decision
+  founderDecision?: 'approve' | 'pause' | 'kill';
+  founderDecisionNotes?: string;
+  founderDecisionAt?: string;
+  founderDecisionBy?: string;
+  // Metadata
+  createdAt: string;
+  updatedAt: string;
+  archivedAt?: string;
+}
+
+export interface AppAgentReview {
+  agentId: AIAgentType;
+  summary: string;
+  flags: AppAgentFlag[];
+  recommendations: string[];
+  reviewedAt: string;
+}
+
+export interface AppAgentFlag {
+  id: string;
+  category: 'ip_conflict' | 'ethical_risk' | 'over_complexity' | 'scope_creep' | 'resource_constraint' | 'other';
+  severity: 'low' | 'medium' | 'high';
+  description: string;
+  acknowledged: boolean;
+}
+
 export interface ActivityLog {
   id: string;
   action: string;
-  entityType: 'idea' | 'project' | 'spec' | 'task' | 'contributor' | 'agreement' | 'agent_action' | 'evaluation';
+  entityType: 'idea' | 'project' | 'spec' | 'task' | 'contributor' | 'agreement' | 'agent_action' | 'evaluation' | 'app';
   entityId: string;
   userId: string;
   timestamp: string;
