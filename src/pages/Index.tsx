@@ -6,30 +6,36 @@ import { GuardrailsPanel } from '@/components/guardrails';
 import { ContributorList, ContributorDetail, OnboardingWizard, ContributorWelcome } from '@/components/contributors';
 import { AgentsPanel } from '@/components/agents';
 import { AgreementRegistry, AccessTiersPanel, MVPChecklist, OperationalDesign, AuditLog } from '@/components/compliance';
+import { EvaluationList, EvaluationDetail } from '@/components/evaluations';
 import { useIdeas } from '@/hooks/useIdeas';
 import { useProjects } from '@/hooks/useProjects';
 import { useContributors } from '@/hooks/useContributors';
 import { useAgents } from '@/hooks/useAgents';
 import { useAuditLog } from '@/hooks/useAuditLog';
-import { Idea, Contributor, AccessTier } from '@/types/karma';
+import { useEvaluations } from '@/hooks/useEvaluations';
+import { Idea, Contributor, AccessTier, ContributorEvaluation } from '@/types/karma';
 import { useToast } from '@/hooks/use-toast';
 
-type View = 'ideas' | 'projects' | 'specs' | 'tasks' | 'team' | 'agents' | 'agreements' | 'tiers' | 'guardrails' | 'mvp' | 'design' | 'integrations' | 'audit';
+type View = 'ideas' | 'projects' | 'specs' | 'tasks' | 'team' | 'agents' | 'agreements' | 'tiers' | 'guardrails' | 'mvp' | 'design' | 'integrations' | 'audit' | 'evaluations';
 type IdeaView = 'list' | 'wizard' | 'detail';
 type TeamView = 'list' | 'onboarding' | 'detail';
+type EvaluationView = 'list' | 'detail';
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<View>('ideas');
   const [ideaView, setIdeaView] = useState<IdeaView>('list');
   const [teamView, setTeamView] = useState<TeamView>('list');
+  const [evalView, setEvalView] = useState<EvaluationView>('list');
   const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
   const [selectedContributor, setSelectedContributor] = useState<Contributor | null>(null);
+  const [selectedEvaluation, setSelectedEvaluation] = useState<ContributorEvaluation | null>(null);
   
   const { ideas, addIdea, updateIdeaStatus, deleteIdea } = useIdeas();
   const { projects } = useProjects();
   const { contributors, addContributor, sendAgreements, signAgreement, provisionAccess, revokeAccess, archiveContributor, getContributorAgreements } = useContributors();
   const { agents, getPendingActions, approveAction, rejectAction } = useAgents();
   const { logs, logActivity } = useAuditLog();
+  const { evaluations, updateScore, acknowledgeRiskFlag, makeDecision, getContributorQuestionnaire } = useEvaluations();
   const { toast } = useToast();
 
   const handleNewIdea = () => {
@@ -164,13 +170,43 @@ const Index = () => {
       );
     }
 
+    if (currentView === 'evaluations') {
+      if (evalView === 'detail' && selectedEvaluation) {
+        const questionnaire = getContributorQuestionnaire(selectedEvaluation.contributorId);
+        const refreshedEval = evaluations.find(e => e.id === selectedEvaluation.id) || selectedEvaluation;
+        return (
+          <EvaluationDetail
+            evaluation={refreshedEval}
+            questionnaireResponses={questionnaire?.responses}
+            onBack={() => { setEvalView('list'); setSelectedEvaluation(null); }}
+            onUpdateScore={(cat, score, notes) => { updateScore(refreshedEval.id, cat, score, notes); }}
+            onAcknowledgeFlag={(flagId) => { acknowledgeRiskFlag(refreshedEval.id, flagId); }}
+            onMakeDecision={(decision, notes, cond, deadline) => { 
+              makeDecision(refreshedEval.id, decision, notes, cond, deadline); 
+              toast({ title: `Evaluation ${decision}` }); 
+            }}
+          />
+        );
+      }
+      return (
+        <>
+          <PageHeader title="Evaluations" description="AI-assisted contributor evaluation rubric" />
+          <EvaluationList 
+            evaluations={evaluations} 
+            contributors={contributors}
+            onEvaluationClick={(e) => { setSelectedEvaluation(e); setEvalView('detail'); }}
+          />
+        </>
+      );
+    }
+
     return (
       <PageHeader title={currentView.charAt(0).toUpperCase() + currentView.slice(1)} description="Coming soon" />
     );
   };
 
   return (
-    <AppLayout currentView={currentView} onViewChange={(v) => { setCurrentView(v as View); setIdeaView('list'); setTeamView('list'); }} onNewIdea={handleNewIdea}>
+    <AppLayout currentView={currentView} onViewChange={(v) => { setCurrentView(v as View); setIdeaView('list'); setTeamView('list'); setEvalView('list'); }} onNewIdea={handleNewIdea}>
       {renderContent()}
     </AppLayout>
   );

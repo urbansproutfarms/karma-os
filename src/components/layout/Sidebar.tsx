@@ -30,6 +30,7 @@ const navigation = [
   { id: 'specs', label: 'Specs', icon: FileText },
   { id: 'tasks', label: 'Tasks', icon: CheckSquare },
   { id: 'team', label: 'Contributors', icon: Users },
+  { id: 'evaluations', label: 'Evaluations', icon: Scale },
   { id: 'agents', label: 'AI Agents', icon: Settings },
   { id: 'agreements', label: 'Agreements', icon: Scale },
   { id: 'audit', label: 'Audit Log', icon: Activity },
