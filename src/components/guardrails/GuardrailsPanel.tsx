@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Guardrail } from '@/types/karma';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Shield, AlertTriangle, DollarSign, Target, Workflow } from 'lucide-react';
+import { Shield, AlertTriangle, DollarSign, Target, Workflow, Lock, UserCheck } from 'lucide-react';
 
 const defaultGuardrails: Guardrail[] = [
   {
@@ -13,6 +13,7 @@ const defaultGuardrails: Guardrail[] = [
     description: 'All compensation agreements must be documented before work begins. No promises made after the fact.',
     category: 'financial',
     isActive: true,
+    isSystemRule: true,
   },
   {
     id: '2',
@@ -20,6 +21,7 @@ const defaultGuardrails: Guardrail[] = [
     description: 'All scope changes must be documented and approved before implementation.',
     category: 'scope',
     isActive: true,
+    isSystemRule: true,
   },
   {
     id: '3',
@@ -27,6 +29,7 @@ const defaultGuardrails: Guardrail[] = [
     description: 'User interfaces must be honest and transparent. No deceptive or manipulative design.',
     category: 'ethics',
     isActive: true,
+    isSystemRule: true,
   },
   {
     id: '4',
@@ -34,6 +37,7 @@ const defaultGuardrails: Guardrail[] = [
     description: 'All major architectural, financial, or strategic decisions require explicit human approval.',
     category: 'process',
     isActive: true,
+    isSystemRule: true,
   },
   {
     id: '5',
@@ -41,6 +45,7 @@ const defaultGuardrails: Guardrail[] = [
     description: 'Be explicit about what data is collected, how it is used, and who has access.',
     category: 'ethics',
     isActive: true,
+    isSystemRule: true,
   },
   {
     id: '6',
@@ -48,14 +53,41 @@ const defaultGuardrails: Guardrail[] = [
     description: 'Do not commit to deliverables without confirming team capacity and timeline feasibility.',
     category: 'process',
     isActive: true,
+    isSystemRule: true,
+  },
+  {
+    id: '7',
+    rule: 'No work without signed agreements',
+    description: 'Contributors cannot be assigned tasks or submit work until NDA and IP Assignment are signed.',
+    category: 'compliance',
+    isActive: true,
+    isSystemRule: true,
+  },
+  {
+    id: '8',
+    rule: 'No permanent access for contributors',
+    description: 'All contributor access is temporary and must be explicitly revoked upon exit.',
+    category: 'access',
+    isActive: true,
+    isSystemRule: true,
+  },
+  {
+    id: '9',
+    rule: 'Full auditability',
+    description: 'All actions must be logged and reviewable. No silent changes to system or access.',
+    category: 'process',
+    isActive: true,
+    isSystemRule: true,
   },
 ];
 
-const categoryConfig = {
+const categoryConfig: Record<string, { icon: typeof Shield; label: string; className: string }> = {
   ethics: { icon: AlertTriangle, label: 'Ethics', className: 'text-warning' },
   process: { icon: Workflow, label: 'Process', className: 'text-info' },
   financial: { icon: DollarSign, label: 'Financial', className: 'text-success' },
   scope: { icon: Target, label: 'Scope', className: 'text-primary' },
+  compliance: { icon: UserCheck, label: 'Compliance', className: 'text-destructive' },
+  access: { icon: Lock, label: 'Access', className: 'text-warning' },
 };
 
 interface GuardrailsPanelProps {
@@ -107,7 +139,7 @@ export function GuardrailsPanel({ onConfirm }: GuardrailsPanelProps) {
       {/* Guardrails List */}
       <div className="space-y-3">
         {guardrails.map((guardrail) => {
-          const category = categoryConfig[guardrail.category];
+          const category = categoryConfig[guardrail.category] || categoryConfig.process;
           const Icon = category.icon;
           const isConfirmed = confirmed.has(guardrail.id);
 
@@ -133,6 +165,9 @@ export function GuardrailsPanel({ onConfirm }: GuardrailsPanelProps) {
                       <span className="font-medium text-foreground">
                         {guardrail.rule}
                       </span>
+                      {guardrail.isSystemRule && (
+                        <Badge variant="outline" className="text-xs">System</Badge>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {guardrail.description}
