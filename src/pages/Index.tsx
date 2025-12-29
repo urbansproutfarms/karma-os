@@ -3,7 +3,7 @@ import { AppLayout, PageHeader } from '@/components/layout';
 import { IdeaIntakeWizard, IdeaList, IdeaDetail } from '@/components/ideas';
 import { ProjectList } from '@/components/projects';
 import { GuardrailsPanel } from '@/components/guardrails';
-import { ContributorList, ContributorDetail, OnboardingWizard } from '@/components/contributors';
+import { ContributorList, ContributorDetail, OnboardingWizard, ContributorWelcome } from '@/components/contributors';
 import { AgentsPanel } from '@/components/agents';
 import { useIdeas } from '@/hooks/useIdeas';
 import { useProjects } from '@/hooks/useProjects';
@@ -106,6 +106,7 @@ const Index = () => {
       return (
         <>
           <PageHeader title="Contributors" description="Manage contributor compliance and access" />
+          <ContributorWelcome />
           <ContributorList 
             contributors={contributors} 
             onContributorClick={(c) => { setSelectedContributor(c); setTeamView('detail'); }}
