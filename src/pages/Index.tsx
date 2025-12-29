@@ -35,7 +35,7 @@ const Index = () => {
   const { contributors, addContributor, sendAgreements, signAgreement, provisionAccess, revokeAccess, archiveContributor, getContributorAgreements } = useContributors();
   const { agents, getPendingActions, approveAction, rejectAction } = useAgents();
   const { logs, logActivity } = useAuditLog();
-  const { evaluations, updateScore, acknowledgeRiskFlag, makeDecision, getContributorQuestionnaire } = useEvaluations();
+  const { evaluations, updateScore, acknowledgeRiskFlag, makeDecision, confirmTag, removeTag, getContributorQuestionnaire } = useEvaluations();
   const { toast } = useToast();
 
   const handleNewIdea = () => {
@@ -181,6 +181,8 @@ const Index = () => {
             onBack={() => { setEvalView('list'); setSelectedEvaluation(null); }}
             onUpdateScore={(cat, score, notes) => { updateScore(refreshedEval.id, cat, score, notes); }}
             onAcknowledgeFlag={(flagId) => { acknowledgeRiskFlag(refreshedEval.id, flagId); }}
+            onConfirmTag={(tag) => { confirmTag(refreshedEval.id, tag); }}
+            onRemoveTag={(tag) => { removeTag(refreshedEval.id, tag); }}
             onMakeDecision={(decision, notes, cond, deadline) => { 
               makeDecision(refreshedEval.id, decision, notes, cond, deadline); 
               toast({ title: `Evaluation ${decision}` }); 

@@ -7,9 +7,73 @@ import {
   EvaluationDecision,
   ContributorRoleType,
   RUBRIC_CATEGORIES,
-  RubricCategory
+  RubricCategory,
+  EvaluationTag,
+  ScoringTag,
+  FitTag,
+  RiskTag,
+  ReadinessTag
 } from '@/types/karma';
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '@/lib/storage';
+
+// Generate AI-suggested tags based on scores and responses
+function generateAISuggestedTags(
+  scores: RubricScore[],
+  riskFlags: RiskFlag[],
+  responses: Record<string, string>
+): EvaluationTag[] {
+  const tags: EvaluationTag[] = [];
+  const avgScore = scores.reduce((sum, s) => sum + s.score, 0) / scores.length;
+  
+  // Determine fit tag
+  let fitTag: FitTag = 'fit:conditional';
+  if (avgScore >= 4) fitTag = 'fit:strong';
+  else if (avgScore < 3) fitTag = 'fit:weak';
+  
+  tags.push({
+    tag: fitTag,
+    aiSuggested: true,
+    confirmedByFounder: false,
+  });
+
+  // Determine risk tags
+  if (riskFlags.length === 0) {
+    tags.push({ tag: 'risk:none', aiSuggested: true, confirmedByFounder: false });
+  } else {
+    // Map risk flags to risk tags
+    for (const flag of riskFlags) {
+      const category = flag.category.toLowerCase();
+      let riskTag: RiskTag = 'risk:reliability';
+      if (category.includes('ip') || category.includes('intellectual')) riskTag = 'risk:ip';
+      else if (category.includes('scope')) riskTag = 'risk:scope';
+      else if (category.includes('communication') || category.includes('response')) riskTag = 'risk:communication';
+      else if (category.includes('availability') || category.includes('reliability')) riskTag = 'risk:reliability';
+      
+      // Avoid duplicate risk tags
+      if (!tags.some(t => t.tag === riskTag)) {
+        tags.push({ tag: riskTag, aiSuggested: true, confirmedByFounder: false });
+      }
+    }
+  }
+
+  // Determine readiness tag based on fit and risk
+  let readinessTag: ReadinessTag = 'ready:clarify';
+  if (fitTag === 'fit:strong' && riskFlags.length === 0) {
+    readinessTag = 'ready:sign';
+  } else if (fitTag === 'fit:weak') {
+    readinessTag = 'ready:decline';
+  } else if (riskFlags.some(f => f.severity === 'high')) {
+    readinessTag = 'ready:pause';
+  }
+  
+  tags.push({
+    tag: readinessTag,
+    aiSuggested: true,
+    confirmedByFounder: false,
+  });
+
+  return tags;
+}
 
 // Mock AI evaluation generator (would be replaced with actual AI call)
 function generateMockAIEvaluation(
@@ -21,6 +85,7 @@ function generateMockAIEvaluation(
   strengths: string[]; 
   concerns: string[];
   riskFlags: RiskFlag[];
+  tags: EvaluationTag[];
 } {
   const categories = Object.keys(RUBRIC_CATEGORIES) as RubricCategory[];
   
@@ -65,6 +130,9 @@ function generateMockAIEvaluation(
     });
   }
 
+  // Generate AI-suggested tags
+  const tags = generateAISuggestedTags(scores, riskFlags, responses);
+
   const roleLabels: Record<ContributorRoleType, string> = {
     product_ops: 'Product/Operations',
     technical: 'Technical',
@@ -73,6 +141,7 @@ function generateMockAIEvaluation(
 
   return {
     scores,
+    tags,
     summary: `Candidate appears to be a ${scores.filter(s => s.score >= 4).length >= 4 ? 'strong' : 'moderate'} fit for the ${roleLabels[roleType]} role. Questionnaire responses indicate ${Object.values(responses).some(r => r.length > 100) ? 'thoughtful engagement' : 'brief responses'}. Further founder review recommended.`,
     strengths: [
       'Completed intake questionnaire',
@@ -155,6 +224,7 @@ export function useEvaluations() {
       questionnaireResponseId: questionnaireResponse.id,
       scores: aiResult.scores,
       overallScore,
+      tags: aiResult.tags,
       aiSummary: aiResult.summary,
       aiStrengths: aiResult.strengths,
       aiConcerns: aiResult.concerns,
@@ -246,11 +316,82 @@ export function useEvaluations() {
     return questionnaires.find(q => q.contributorId === contributorId);
   }, [questionnaires]);
 
-  // Check if contributor can proceed to agreements
+  // Check if contributor can proceed to agreements (must have ready:sign tag confirmed)
   const canProceedToAgreements = useCallback((contributorId: string): boolean => {
     const evaluation = evaluations.find(e => e.contributorId === contributorId);
-    return evaluation?.decision === 'approved';
+    if (!evaluation) return false;
+    
+    const readySignTag = evaluation.tags.find(t => t.tag === 'ready:sign');
+    return readySignTag?.confirmedByFounder === true;
   }, [evaluations]);
+
+  // Check if evaluation has blocking tags
+  const hasBlockingTags = useCallback((evaluationId: string): boolean => {
+    const evaluation = evaluations.find(e => e.id === evaluationId);
+    if (!evaluation) return false;
+    
+    return evaluation.tags.some(t => 
+      (t.tag === 'fit:weak' || t.tag === 'ready:decline') && t.confirmedByFounder
+    );
+  }, [evaluations]);
+
+  // Check if evaluation requires founder review (has risk tags)
+  const requiresFounderReview = useCallback((evaluationId: string): boolean => {
+    const evaluation = evaluations.find(e => e.id === evaluationId);
+    if (!evaluation) return true;
+    
+    return evaluation.tags.some(t => 
+      t.tag.startsWith('risk:') && t.tag !== 'risk:none' && !t.confirmedByFounder
+    );
+  }, [evaluations]);
+
+  // Confirm or update a tag
+  const confirmTag = useCallback((evaluationId: string, tag: ScoringTag, notes?: string) => {
+    const now = new Date().toISOString();
+    
+    const updated = evaluations.map(e => {
+      if (e.id !== evaluationId || e.isFinalized) return e;
+      
+      const existingTagIndex = e.tags.findIndex(t => t.tag === tag);
+      let newTags = [...e.tags];
+      
+      if (existingTagIndex >= 0) {
+        // Update existing tag
+        newTags[existingTagIndex] = {
+          ...newTags[existingTagIndex],
+          confirmedByFounder: true,
+          confirmedAt: now,
+          notes,
+        };
+      } else {
+        // Add new tag
+        newTags.push({
+          tag,
+          aiSuggested: false,
+          confirmedByFounder: true,
+          confirmedAt: now,
+          notes,
+        });
+      }
+      
+      return { ...e, tags: newTags, updatedAt: now };
+    });
+    saveEvaluations(updated);
+  }, [evaluations, saveEvaluations]);
+
+  // Remove a tag
+  const removeTag = useCallback((evaluationId: string, tag: ScoringTag) => {
+    const updated = evaluations.map(e => {
+      if (e.id !== evaluationId || e.isFinalized) return e;
+      
+      return {
+        ...e,
+        tags: e.tags.filter(t => t.tag !== tag),
+        updatedAt: new Date().toISOString(),
+      };
+    });
+    saveEvaluations(updated);
+  }, [evaluations, saveEvaluations]);
 
   // Get pending evaluations
   const getPendingEvaluations = useCallback((): ContributorEvaluation[] => {
@@ -265,9 +406,13 @@ export function useEvaluations() {
     updateScore,
     acknowledgeRiskFlag,
     makeDecision,
+    confirmTag,
+    removeTag,
     getContributorEvaluation,
     getContributorQuestionnaire,
     canProceedToAgreements,
+    hasBlockingTags,
+    requiresFounderReview,
     getPendingEvaluations,
   };
 }
