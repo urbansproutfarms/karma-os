@@ -34,6 +34,7 @@ const navigation = [
   { id: 'agents', label: 'AI Agents', icon: Settings },
   { id: 'agreements', label: 'Agreements', icon: Scale },
   { id: 'audit', label: 'Audit Log', icon: Activity },
+  { id: 'build-order', label: 'MVP Build Order', icon: CheckSquare },
   { id: 'design', label: 'Operational Design', icon: BookOpen },
   { id: 'integrations', label: 'Integrations', icon: Link2 },
   { id: 'guardrails', label: 'Guardrails', icon: Shield },
