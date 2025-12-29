@@ -12,7 +12,8 @@ import {
   X,
   Scale,
   BookOpen,
-  Activity
+  Activity,
+  Package
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -25,6 +26,7 @@ interface SidebarProps {
 }
 
 const navigation = [
+  { id: 'apps', label: 'App Governance', icon: Package },
   { id: 'ideas', label: 'Ideas', icon: Lightbulb },
   { id: 'projects', label: 'Projects', icon: FolderKanban },
   { id: 'specs', label: 'Specs', icon: FileText },
