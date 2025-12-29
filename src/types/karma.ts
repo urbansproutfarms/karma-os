@@ -9,12 +9,24 @@ export type ProjectStatus = 'active' | 'paused' | 'completed' | 'archived';
 // Contributor Types
 export type ContributorRoleType = 'product_ops' | 'technical' | 'design_ux';
 export type EngagementType = 'contract' | 'trial' | 'unpaid';
-export type AgreementStatus = 'not_sent' | 'sent' | 'signed' | 'revoked' | 'expired';
-export type AccessLevel = 'none' | 'limited' | 'active' | 'revoked';
+export type AgreementStatus = 'not_sent' | 'sent' | 'pending_signature' | 'signed' | 'revoked' | 'expired';
 export type WorkflowStage = 'intake' | 'documents' | 'signing' | 'provisioning' | 'ready' | 'working' | 'exit' | 'archived';
+
+// Access Tier Types (0-3)
+export type AccessTier = 0 | 1 | 2 | 3;
+export const ACCESS_TIER_NAMES: Record<AccessTier, string> = {
+  0: 'No Access',
+  1: 'Limited Contributor',
+  2: 'Scoped Technical',
+  3: 'Ops / Coordination',
+};
 
 // AI Agent Types
 export type AIAgentType = 'systems_architect' | 'product_spec' | 'code_builder' | 'risk_integrity';
+
+// E-Signature Provider Types (abstracted)
+export type ESignatureProvider = 'docusign' | 'dropbox_sign' | 'signwell' | 'other';
+export type AgreementTemplateStatus = 'active' | 'deprecated' | 'draft';
 
 export interface User {
   id: string;
@@ -106,8 +118,10 @@ export interface Contributor {
   ipAssignmentStatus: AgreementStatus;
   ndaSignedDate?: string;
   ipSignedDate?: string;
+  ndaTemplateId?: string;
+  ipTemplateId?: string;
   agreementVersion: string;
-  accessLevel: AccessLevel;
+  accessTier: AccessTier;
   workflowStage: WorkflowStage;
   portfolioUrl?: string;
   resumeUrl?: string;
@@ -118,18 +132,39 @@ export interface Contributor {
   exitReason?: string;
 }
 
+// Agreement Template (Versioned Legal Documents)
+export interface AgreementTemplate {
+  id: string;
+  type: 'nda' | 'ip_assignment' | 'combined';
+  version: string;
+  name: string;
+  effectiveDate: string;
+  status: AgreementTemplateStatus;
+  applicableRoles: ContributorRoleType[];
+  changeNotes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Signed Agreement (E-Signature Record)
 export interface Agreement {
   id: string;
   contributorId: string;
+  templateId: string;
   type: 'nda' | 'ip_assignment';
   version: string;
   status: AgreementStatus;
+  // E-Signature fields (provider-agnostic)
+  externalDocumentId?: string;
+  externalProvider?: ESignatureProvider;
+  signerEmail?: string;
+  signerName?: string;
+  signerIpAddress?: string;
   sentAt?: string;
+  viewedAt?: string;
   signedAt?: string;
   revokedAt?: string;
   expiresAt?: string;
-  documentUrl?: string;
-  signatureData?: string;
 }
 
 export interface AIAgent {

@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Contributor, Agreement, AgreementStatus, AccessLevel, WorkflowStage } from '@/types/karma';
+import { Contributor, Agreement, AgreementStatus, AccessTier } from '@/types/karma';
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '@/lib/storage';
+
+const DEFAULT_TEMPLATE_ID = 'default-v1';
 
 export function useContributors() {
   const [contributors, setContributors] = useState<Contributor[]>([]);
@@ -25,14 +27,14 @@ export function useContributors() {
     setStorageItem(STORAGE_KEYS.AGREEMENTS, updated);
   }, []);
 
-  const addContributor = useCallback((data: Omit<Contributor, 'id' | 'createdAt' | 'updatedAt' | 'accessLevel' | 'workflowStage' | 'ndaStatus' | 'ipAssignmentStatus' | 'agreementVersion'>) => {
+  const addContributor = useCallback((data: Omit<Contributor, 'id' | 'createdAt' | 'updatedAt' | 'accessTier' | 'workflowStage' | 'ndaStatus' | 'ipAssignmentStatus' | 'agreementVersion'>) => {
     const newContributor: Contributor = {
       ...data,
       id: crypto.randomUUID(),
       ndaStatus: 'not_sent',
       ipAssignmentStatus: 'not_sent',
       agreementVersion: '1.0',
-      accessLevel: 'none',
+      accessTier: 0,
       workflowStage: 'intake',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -50,14 +52,19 @@ export function useContributors() {
 
   const sendAgreements = useCallback((contributorId: string) => {
     const now = new Date().toISOString();
+    const contributor = contributors.find(c => c.id === contributorId);
     
-    // Create NDA agreement
+    // Create NDA agreement with e-signature tracking
     const nda: Agreement = {
       id: crypto.randomUUID(),
       contributorId,
+      templateId: DEFAULT_TEMPLATE_ID,
       type: 'nda',
       version: '1.0',
       status: 'sent',
+      signerEmail: contributor?.email,
+      signerName: contributor?.legalName,
+      externalProvider: 'other',
       sentAt: now,
     };
     
@@ -65,9 +72,13 @@ export function useContributors() {
     const ipAssignment: Agreement = {
       id: crypto.randomUUID(),
       contributorId,
+      templateId: DEFAULT_TEMPLATE_ID,
       type: 'ip_assignment',
       version: '1.0',
       status: 'sent',
+      signerEmail: contributor?.email,
+      signerName: contributor?.legalName,
+      externalProvider: 'other',
       sentAt: now,
     };
     
@@ -78,7 +89,7 @@ export function useContributors() {
       ipAssignmentStatus: 'sent',
       workflowStage: 'signing',
     });
-  }, [agreements, saveAgreements, updateContributor]);
+  }, [agreements, contributors, saveAgreements, updateContributor]);
 
   const signAgreement = useCallback((agreementId: string) => {
     const now = new Date().toISOString();
@@ -104,16 +115,16 @@ export function useContributors() {
     }
 
     if (allSigned) {
-      updates.accessLevel = 'limited';
+      updates.accessTier = 1; // Limited Contributor after signing
       updates.workflowStage = 'provisioning';
     }
 
     updateContributor(agreement.contributorId, updates);
   }, [agreements, saveAgreements, updateContributor]);
 
-  const provisionAccess = useCallback((contributorId: string) => {
+  const provisionAccess = useCallback((contributorId: string, tier: AccessTier = 1) => {
     updateContributor(contributorId, {
-      accessLevel: 'active',
+      accessTier: tier,
       workflowStage: 'ready',
     });
   }, [updateContributor]);
@@ -130,7 +141,7 @@ export function useContributors() {
     updateContributor(contributorId, {
       ndaStatus: 'revoked',
       ipAssignmentStatus: 'revoked',
-      accessLevel: 'revoked',
+      accessTier: 0,
       workflowStage: 'exit',
       exitReason: reason,
     });
@@ -148,7 +159,7 @@ export function useContributors() {
     if (!contributor) return false;
     return contributor.ndaStatus === 'signed' && 
            contributor.ipAssignmentStatus === 'signed' &&
-           contributor.accessLevel === 'active';
+           contributor.accessTier > 0;
   }, [contributors]);
 
   const getContributorAgreements = useCallback((contributorId: string): Agreement[] => {
