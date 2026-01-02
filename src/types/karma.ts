@@ -278,6 +278,8 @@ export interface AppIntake {
   founderDecisionNotes?: string;
   founderDecisionAt?: string;
   founderDecisionBy?: string;
+  // Launch Readiness
+  trafficLight?: 'green' | 'yellow' | 'red';
   // Metadata
   createdAt: string;
   updatedAt: string;
