@@ -1,4 +1,4 @@
-import { AppIntake, AppStatus } from '@/types/karma';
+import { AppIntake, AppStatus, VercelReadinessChecklist } from '@/types/karma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Package, AlertTriangle, CheckCircle, PauseCircle, XCircle, Zap } from 'lucide-react';
@@ -6,6 +6,7 @@ import { Package, AlertTriangle, CheckCircle, PauseCircle, XCircle, Zap } from '
 interface AppCardProps {
   app: AppIntake;
   onClick: () => void;
+  isLaunchApproved?: boolean;
 }
 
 const STATUS_CONFIG: Record<AppStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof Package }> = {
@@ -22,21 +23,17 @@ const TRAFFIC_LIGHT_CONFIG = {
   red: { color: 'bg-red-500', label: 'Red' },
 };
 
-function isReadyToLaunch(app: AppIntake): boolean {
-  return (
-    app.status === 'approved' &&
-    app.ownerConfirmed &&
-    app.assetOwnershipConfirmed &&
-    app.trafficLight === 'green' &&
-    !!app.repoUrl
-  );
+function getVercelChecklistScore(checklist?: VercelReadinessChecklist): { complete: number; total: number } {
+  if (!checklist) return { complete: 0, total: 6 };
+  const values = Object.values(checklist);
+  return { complete: values.filter(Boolean).length, total: values.length };
 }
 
-export function AppCard({ app, onClick }: AppCardProps) {
+export function AppCard({ app, onClick, isLaunchApproved = false }: AppCardProps) {
   const statusConfig = STATUS_CONFIG[app.status];
   const StatusIcon = statusConfig.icon;
   const trafficConfig = app.trafficLight ? TRAFFIC_LIGHT_CONFIG[app.trafficLight] : null;
-  const readyToLaunch = isReadyToLaunch(app);
+  const vercelScore = getVercelChecklistScore(app.vercelReadiness);
 
   const flagCount = (app.productSpecReview?.flags.length || 0) + (app.riskIntegrityReview?.flags.length || 0);
   const unacknowledgedFlags = [
@@ -65,8 +62,8 @@ export function AppCard({ app, onClick }: AppCardProps) {
             <div>
               <CardTitle className="text-base flex items-center gap-2">
                 {app.name}
-                {readyToLaunch && (
-                  <span title="Ready to Launch" className="text-lg">🚀</span>
+                {isLaunchApproved && (
+                  <span title="Launch Approved" className="text-lg">🚀</span>
                 )}
                 {app.isActive && (
                   <Badge variant="default" className="text-xs">
@@ -90,6 +87,9 @@ export function AppCard({ app, onClick }: AppCardProps) {
         </p>
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           {app.intendedUser && <span>User: {app.intendedUser}</span>}
+          <span className={vercelScore.complete === vercelScore.total ? 'text-primary' : 'text-muted-foreground'}>
+            Vercel: {vercelScore.complete}/{vercelScore.total}
+          </span>
           {flagCount > 0 && (
             <span className={unacknowledgedFlags > 0 ? 'text-warning' : 'text-muted-foreground'}>
               {unacknowledgedFlags > 0 ? `${unacknowledgedFlags} unreviewed flag(s)` : `${flagCount} flag(s) reviewed`}

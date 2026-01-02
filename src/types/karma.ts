@@ -253,6 +253,16 @@ export interface OnboardingChecklist {
 export type AppOrigin = 'lovable' | 'rork' | 'google_ai_studio' | 'chat' | 'manual' | 'other';
 export type AppStatus = 'unreviewed' | 'in_review' | 'approved' | 'paused' | 'killed';
 
+// Vercel/PWA Readiness Checklist
+export interface VercelReadinessChecklist {
+  pwaManifestPresent: boolean;
+  serviceWorkerRegistered: boolean;
+  noFalseClaimsOrLegalAmbiguity: boolean;
+  clearInformationalLanguage: boolean;
+  errorFreeLoad: boolean;
+  readyForVercelDeployment: boolean;
+}
+
 export interface AppIntake {
   id: string;
   name: string;
@@ -280,6 +290,7 @@ export interface AppIntake {
   founderDecisionBy?: string;
   // Launch Readiness
   trafficLight?: 'green' | 'yellow' | 'red';
+  vercelReadiness?: VercelReadinessChecklist;
   // Metadata
   createdAt: string;
   updatedAt: string;
