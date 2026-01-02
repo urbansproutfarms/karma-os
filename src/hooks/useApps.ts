@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { AppIntake, AppStatus, AppOrigin, AppAgentReview, AppAgentFlag, AIAgentType } from '@/types/karma';
+import { AppIntake, AppStatus, AppOrigin, AppAgentReview, AppAgentFlag, AIAgentType, VercelReadinessChecklist } from '@/types/karma';
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '@/lib/storage';
 import { useAuditLog } from './useAuditLog';
 
@@ -342,6 +342,30 @@ export function useApps() {
     return productFlags.length > 0 || riskFlags.length > 0;
   }, [apps]);
 
+  // Update Vercel readiness checklist
+  const updateVercelReadiness = useCallback((appId: string, checklist: VercelReadinessChecklist) => {
+    updateApp(appId, { vercelReadiness: checklist });
+    logActivity('vercel_readiness_updated', 'app', appId, 'founder', { updated: true });
+  }, [updateApp, logActivity]);
+
+  // Check if app is launch-approved (green + all Vercel checklist + no unacknowledged flags)
+  const isLaunchApproved = useCallback((appId: string): boolean => {
+    const app = apps.find(a => a.id === appId);
+    if (!app) return false;
+    
+    const isGreen = app.trafficLight === 'green';
+    const checklist = app.vercelReadiness;
+    const allChecklistComplete = checklist && Object.values(checklist).every(Boolean);
+    const noUnackedFlags = !hasUnacknowledgedFlags(appId);
+    
+    return isGreen && allChecklistComplete && noUnackedFlags;
+  }, [apps, hasUnacknowledgedFlags]);
+
+  // Get all launch-approved apps
+  const getLaunchApprovedApps = useCallback((): AppIntake[] => {
+    return apps.filter(a => isLaunchApproved(a.id));
+  }, [apps, isLaunchApproved]);
+
   return {
     apps,
     isLoading,
@@ -357,5 +381,8 @@ export function useApps() {
     getActiveApp,
     canProceedToBuild,
     hasUnacknowledgedFlags,
+    updateVercelReadiness,
+    isLaunchApproved,
+    getLaunchApprovedApps,
   };
 }

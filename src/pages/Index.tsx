@@ -40,7 +40,7 @@ const Index = () => {
   const { agents, getPendingActions, approveAction, rejectAction } = useAgents();
   const { logs, logActivity } = useAuditLog();
   const { evaluations, updateScore, acknowledgeRiskFlag, makeDecision, confirmTag, removeTag, getContributorQuestionnaire } = useEvaluations();
-  const { apps, isLoading: appsLoading, createApp, quickRegister, runAgentReview, makeFounderDecision, setActiveApp, confirmOwnership, acknowledgeFlag, canProceedToBuild, getActiveApp } = useApps();
+  const { apps, isLoading: appsLoading, createApp, quickRegister, runAgentReview, makeFounderDecision, setActiveApp, confirmOwnership, acknowledgeFlag, canProceedToBuild, getActiveApp, isLaunchApproved } = useApps();
   const { toast } = useToast();
 
   const handleNewIdea = () => {
@@ -82,6 +82,7 @@ const Index = () => {
         <LaunchDashboard 
           apps={apps ?? []} 
           onAppClick={handleAppClickFromDashboard}
+          isLaunchApproved={isLaunchApproved}
         />
       );
     }

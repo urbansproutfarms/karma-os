@@ -27,8 +27,10 @@ interface AppListProps {
   onSetActive: (appId: string) => void;
   onConfirmOwnership: (appId: string, repoUrl: string) => void;
   onAcknowledgeFlag: (appId: string, flagId: string, reviewType: 'productSpecReview' | 'riskIntegrityReview') => void;
+  onUpdateVercelReadiness?: (appId: string, checklist: import('@/types/karma').VercelReadinessChecklist) => void;
   canProceedToBuild: (appId: string) => boolean;
   getActiveApp: () => AppIntake | undefined;
+  isLaunchApproved?: (appId: string) => boolean;
 }
 
 type ViewMode = 'list' | 'create' | 'detail' | 'quick-register';
@@ -42,8 +44,10 @@ export function AppList({
   onSetActive,
   onConfirmOwnership,
   onAcknowledgeFlag,
+  onUpdateVercelReadiness,
   canProceedToBuild,
   getActiveApp,
+  isLaunchApproved,
 }: AppListProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
@@ -105,6 +109,7 @@ export function AppList({
         onSetActive={onSetActive}
         onConfirmOwnership={onConfirmOwnership}
         onAcknowledgeFlag={onAcknowledgeFlag}
+        onUpdateVercelReadiness={onUpdateVercelReadiness}
         canProceedToBuild={canProceedToBuild(selectedApp.id)}
       />
     );
@@ -200,8 +205,10 @@ export function AppList({
                   key={app.id} 
                   app={app} 
                   onClick={() => handleSelectApp(app)}
+                  isLaunchApproved={isLaunchApproved?.(app.id) ?? false}
                 />
               ))}
+            </div>
             </div>
           )}
         </TabsContent>
