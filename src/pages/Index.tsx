@@ -38,7 +38,7 @@ const Index = () => {
   const { agents, getPendingActions, approveAction, rejectAction } = useAgents();
   const { logs, logActivity } = useAuditLog();
   const { evaluations, updateScore, acknowledgeRiskFlag, makeDecision, confirmTag, removeTag, getContributorQuestionnaire } = useEvaluations();
-  const { apps, createApp, runAgentReview, makeFounderDecision, setActiveApp, confirmOwnership, acknowledgeFlag, canProceedToBuild, getActiveApp } = useApps();
+  const { apps, isLoading: appsLoading, createApp, runAgentReview, makeFounderDecision, setActiveApp, confirmOwnership, acknowledgeFlag, canProceedToBuild, getActiveApp } = useApps();
   const { toast } = useToast();
 
   const handleNewIdea = () => {
@@ -215,9 +215,16 @@ const Index = () => {
     }
 
     if (currentView === 'apps') {
+      if (appsLoading) {
+        return (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        );
+      }
       return (
         <AppList
-          apps={apps}
+          apps={apps ?? []}
           onCreateApp={(data) => { createApp(data); toast({ title: 'App registered', description: 'Run agent review to proceed.' }); }}
           onRunAgentReview={(id) => { runAgentReview(id); toast({ title: 'Agent review complete' }); }}
           onMakeDecision={(id, decision, notes) => { 
