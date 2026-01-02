@@ -1,16 +1,27 @@
 import { useState } from 'react';
-import { AppIntake, AppStatus } from '@/types/karma';
+import { AppIntake, AppStatus, AppOrigin } from '@/types/karma';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { AppCard } from './AppCard';
 import { AppIntakeForm } from './AppIntakeForm';
 import { AppDetail } from './AppDetail';
-import { Plus, Package, Zap } from 'lucide-react';
+import { QuickRegisterForm } from './QuickRegisterForm';
+import { Plus, Package, Zap, ListPlus } from 'lucide-react';
+
+type TrafficLight = 'green' | 'yellow' | 'red';
+
+interface QuickRegisterEntry {
+  name: string;
+  source: AppOrigin;
+  purpose: string;
+  initialStatus: TrafficLight;
+}
 
 interface AppListProps {
   apps: AppIntake[];
   onCreateApp: (data: Parameters<typeof AppIntakeForm>[0]['onSubmit'] extends (d: infer D) => void ? D : never) => void;
+  onQuickRegister?: (entries: QuickRegisterEntry[]) => void;
   onRunAgentReview: (appId: string) => void;
   onMakeDecision: (appId: string, decision: 'approve' | 'pause' | 'kill', notes?: string) => void;
   onSetActive: (appId: string) => void;
@@ -20,11 +31,12 @@ interface AppListProps {
   getActiveApp: () => AppIntake | undefined;
 }
 
-type ViewMode = 'list' | 'create' | 'detail';
+type ViewMode = 'list' | 'create' | 'detail' | 'quick-register';
 
 export function AppList({
   apps,
   onCreateApp,
+  onQuickRegister,
   onRunAgentReview,
   onMakeDecision,
   onSetActive,
@@ -69,6 +81,20 @@ export function AppList({
     );
   }
 
+  if (viewMode === 'quick-register') {
+    return (
+      <QuickRegisterForm
+        onSubmit={(entries) => {
+          if (onQuickRegister) {
+            onQuickRegister(entries);
+          }
+          setViewMode('list');
+        }}
+        onCancel={() => setViewMode('list')}
+      />
+    );
+  }
+
   if (viewMode === 'detail' && selectedApp) {
     return (
       <AppDetail
@@ -99,10 +125,16 @@ export function AppList({
             </p>
           </div>
         </div>
-        <Button onClick={() => setViewMode('create')}>
-          <Plus className="h-4 w-4 mr-2" />
-          New App Intake
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setViewMode('quick-register')}>
+            <ListPlus className="h-4 w-4 mr-2" />
+            Quick Register
+          </Button>
+          <Button onClick={() => setViewMode('create')}>
+            <Plus className="h-4 w-4 mr-2" />
+            New App Intake
+          </Button>
+        </div>
       </div>
 
       {/* Active App Banner */}

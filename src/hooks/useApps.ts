@@ -46,6 +46,44 @@ export function useApps() {
     return newApp;
   }, [apps, saveApps, logActivity]);
 
+  // Quick register multiple apps with minimal fields
+  const quickRegister = useCallback((entries: {
+    name: string;
+    source: AppOrigin;
+    purpose: string;
+    initialStatus: 'green' | 'yellow' | 'red';
+  }[]): AppIntake[] => {
+    const newApps: AppIntake[] = entries.map(entry => ({
+      id: crypto.randomUUID(),
+      name: entry.name,
+      origin: entry.source,
+      description: entry.purpose,
+      intendedUser: '',
+      mvpScope: '',
+      nonGoals: '',
+      riskNotes: '',
+      status: 'unreviewed' as AppStatus,
+      isActive: false,
+      ownerConfirmed: false,
+      ownerEntity: 'Clearpath Technologies LLC',
+      assetOwnershipConfirmed: false,
+      agentReviewComplete: false,
+      trafficLight: entry.initialStatus,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }));
+    
+    saveApps([...newApps, ...apps]);
+    newApps.forEach(app => {
+      logActivity('app_quick_registered', 'app', app.id, 'founder', { 
+        name: app.name, 
+        origin: app.origin,
+        trafficLight: (app as any).trafficLight 
+      });
+    });
+    return newApps;
+  }, [apps, saveApps, logActivity]);
+
   // Update app
   const updateApp = useCallback((id: string, updates: Partial<AppIntake>) => {
     const updated = apps.map(app => 
@@ -279,6 +317,7 @@ export function useApps() {
     apps,
     isLoading,
     createApp,
+    quickRegister,
     updateApp,
     runAgentReview,
     makeFounderDecision,

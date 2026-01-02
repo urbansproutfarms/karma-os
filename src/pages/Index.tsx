@@ -38,7 +38,7 @@ const Index = () => {
   const { agents, getPendingActions, approveAction, rejectAction } = useAgents();
   const { logs, logActivity } = useAuditLog();
   const { evaluations, updateScore, acknowledgeRiskFlag, makeDecision, confirmTag, removeTag, getContributorQuestionnaire } = useEvaluations();
-  const { apps, isLoading: appsLoading, createApp, runAgentReview, makeFounderDecision, setActiveApp, confirmOwnership, acknowledgeFlag, canProceedToBuild, getActiveApp } = useApps();
+  const { apps, isLoading: appsLoading, createApp, quickRegister, runAgentReview, makeFounderDecision, setActiveApp, confirmOwnership, acknowledgeFlag, canProceedToBuild, getActiveApp } = useApps();
   const { toast } = useToast();
 
   const handleNewIdea = () => {
@@ -226,6 +226,10 @@ const Index = () => {
         <AppList
           apps={apps ?? []}
           onCreateApp={(data) => { createApp(data); toast({ title: 'App registered', description: 'Run agent review to proceed.' }); }}
+          onQuickRegister={(entries) => { 
+            quickRegister(entries); 
+            toast({ title: `${entries.length} app(s) registered`, description: 'Governance records created.' }); 
+          }}
           onRunAgentReview={(id) => { runAgentReview(id); toast({ title: 'Agent review complete' }); }}
           onMakeDecision={(id, decision, notes) => { 
             try {
