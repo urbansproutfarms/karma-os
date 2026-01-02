@@ -3,6 +3,23 @@ import { AppIntake, AppStatus, AppOrigin, AppAgentReview, AppAgentFlag, AIAgentT
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '@/lib/storage';
 import { useAuditLog } from './useAuditLog';
 
+// Initial seed data for Clearpath apps
+const SEED_APPS: Omit<AppIntake, 'id' | 'createdAt' | 'updatedAt'>[] = [
+  { name: 'KarmaOS', origin: 'lovable', description: 'Internal founder operating system for governance, compliance, and launch control', intendedUser: 'Founder', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
+  { name: 'ClearPath Launch Dashboard', origin: 'lovable', description: 'Internal dashboard showing launch readiness and compliance status of ClearPath apps', intendedUser: 'Founder', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
+  { name: 'Plant Air IQ', origin: 'other', description: 'Provides informational plant references related to indoor air quality', intendedUser: 'Consumers', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'yellow' },
+  { name: 'Plant Lens', origin: 'rork', description: 'Image-based plant identification and reference tool', intendedUser: 'Consumers', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'yellow' },
+  { name: 'Grow OS', origin: 'lovable', description: 'Personal growth and reflection operating system using structured prompts', intendedUser: 'Individuals', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
+  { name: 'Forward OS', origin: 'lovable', description: 'Future-oriented planning and reflection tool', intendedUser: 'Individuals', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
+  { name: 'Unlock OS', origin: 'lovable', description: 'Self-guided reflection tool focused on unlocking personal insights', intendedUser: 'Individuals', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
+  { name: 'Conscious Co-Pilot', origin: 'other', description: 'AI-assisted reflection and orientation companion', intendedUser: 'Individuals', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'yellow' },
+  { name: 'The Annual Compass App', origin: 'lovable', description: 'End-of-year reflection and review application', intendedUser: 'Individuals', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
+  { name: 'Earned App', origin: 'lovable', description: 'Tracks earned progress and completion of self-directed work', intendedUser: 'Individuals', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'yellow' },
+  { name: 'FarmCoin Network (Concept)', origin: 'lovable', description: 'Concept-stage network for coordinating contributions and rewards in farming communities', intendedUser: 'Farming communities', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'red' },
+  { name: 'Local Harvest (Garden to Plate)', origin: 'lovable', description: 'Informational app connecting local growers with consumers', intendedUser: 'Growers and consumers', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'yellow' },
+  { name: 'GrowCode Adventures', origin: 'lovable', description: 'Educational content platform for youth and families', intendedUser: 'Youth and families', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'yellow' },
+];
+
 export function useApps() {
   const [apps, setApps] = useState<AppIntake[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -10,7 +27,19 @@ export function useApps() {
 
   useEffect(() => {
     const stored = getStorageItem<AppIntake[]>(STORAGE_KEYS.APPS);
-    setApps(stored || []);
+    if (stored && stored.length > 0) {
+      setApps(stored);
+    } else {
+      // Seed initial apps if none exist
+      const seeded: AppIntake[] = SEED_APPS.map(app => ({
+        ...app,
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }));
+      setStorageItem(STORAGE_KEYS.APPS, seeded);
+      setApps(seeded);
+    }
     setIsLoading(false);
   }, []);
 
