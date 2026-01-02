@@ -8,6 +8,7 @@ import { AgentsPanel } from '@/components/agents';
 import { AgreementRegistry, AccessTiersPanel, MVPChecklist, MVPBuildOrder, OperationalDesign, AuditLog } from '@/components/compliance';
 import { EvaluationList, EvaluationDetail } from '@/components/evaluations';
 import { AppList } from '@/components/apps';
+import { LaunchDashboard } from '@/components/dashboard';
 import { useIdeas } from '@/hooks/useIdeas';
 import { useProjects } from '@/hooks/useProjects';
 import { useContributors } from '@/hooks/useContributors';
@@ -15,16 +16,17 @@ import { useAgents } from '@/hooks/useAgents';
 import { useAuditLog } from '@/hooks/useAuditLog';
 import { useEvaluations } from '@/hooks/useEvaluations';
 import { useApps } from '@/hooks/useApps';
-import { Idea, Contributor, AccessTier, ContributorEvaluation } from '@/types/karma';
+import { Idea, Contributor, AccessTier, ContributorEvaluation, AppIntake } from '@/types/karma';
 import { useToast } from '@/hooks/use-toast';
 
-type View = 'ideas' | 'projects' | 'specs' | 'tasks' | 'team' | 'agents' | 'agreements' | 'tiers' | 'guardrails' | 'mvp' | 'build-order' | 'design' | 'integrations' | 'audit' | 'evaluations' | 'apps';
+type View = 'dashboard' | 'ideas' | 'projects' | 'specs' | 'tasks' | 'team' | 'agents' | 'agreements' | 'tiers' | 'guardrails' | 'mvp' | 'build-order' | 'design' | 'integrations' | 'audit' | 'evaluations' | 'apps';
 type IdeaView = 'list' | 'wizard' | 'detail';
 type TeamView = 'list' | 'onboarding' | 'detail';
 type EvaluationView = 'list' | 'detail';
+type AppsView = 'list' | 'detail';
 
 const Index = () => {
-  const [currentView, setCurrentView] = useState<View>('apps');
+  const [currentView, setCurrentView] = useState<View>('dashboard');
   const [ideaView, setIdeaView] = useState<IdeaView>('list');
   const [teamView, setTeamView] = useState<TeamView>('list');
   const [evalView, setEvalView] = useState<EvaluationView>('list');
@@ -62,8 +64,28 @@ const Index = () => {
     setTeamView('list');
     toast({ title: 'Contributor onboarded', description: 'Send agreements to complete onboarding.' });
   };
+  const handleAppClickFromDashboard = (app: AppIntake) => {
+    setCurrentView('apps');
+    // Navigate to app detail - this will be handled by AppList's internal state
+  };
 
   const renderContent = () => {
+    if (currentView === 'dashboard') {
+      if (appsLoading) {
+        return (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        );
+      }
+      return (
+        <LaunchDashboard 
+          apps={apps ?? []} 
+          onAppClick={handleAppClickFromDashboard}
+        />
+      );
+    }
+
     if (currentView === 'ideas') {
       if (ideaView === 'wizard') {
         return <IdeaIntakeWizard onSubmit={handleIdeaSubmit} onCancel={() => setIdeaView('list')} />;

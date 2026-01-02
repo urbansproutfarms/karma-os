@@ -16,9 +16,27 @@ const STATUS_CONFIG: Record<AppStatus, { label: string; variant: 'default' | 'se
   killed: { label: 'Killed', variant: 'destructive', icon: XCircle },
 };
 
+const TRAFFIC_LIGHT_CONFIG = {
+  green: { color: 'bg-emerald-500', label: 'Green' },
+  yellow: { color: 'bg-amber-500', label: 'Yellow' },
+  red: { color: 'bg-red-500', label: 'Red' },
+};
+
+function isReadyToLaunch(app: AppIntake): boolean {
+  return (
+    app.status === 'approved' &&
+    app.ownerConfirmed &&
+    app.assetOwnershipConfirmed &&
+    app.trafficLight === 'green' &&
+    !!app.repoUrl
+  );
+}
+
 export function AppCard({ app, onClick }: AppCardProps) {
   const statusConfig = STATUS_CONFIG[app.status];
   const StatusIcon = statusConfig.icon;
+  const trafficConfig = app.trafficLight ? TRAFFIC_LIGHT_CONFIG[app.trafficLight] : null;
+  const readyToLaunch = isReadyToLaunch(app);
 
   const flagCount = (app.productSpecReview?.flags.length || 0) + (app.riskIntegrityReview?.flags.length || 0);
   const unacknowledgedFlags = [
@@ -34,12 +52,22 @@ export function AppCard({ app, onClick }: AppCardProps) {
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
+            <div className="p-2 rounded-lg bg-primary/10 relative">
               <Package className="h-4 w-4 text-primary" />
+              {/* Traffic Light Indicator */}
+              {trafficConfig && (
+                <span 
+                  className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-background ${trafficConfig.color}`}
+                  title={trafficConfig.label}
+                />
+              )}
             </div>
             <div>
               <CardTitle className="text-base flex items-center gap-2">
                 {app.name}
+                {readyToLaunch && (
+                  <span title="Ready to Launch" className="text-lg">🚀</span>
+                )}
                 {app.isActive && (
                   <Badge variant="default" className="text-xs">
                     <Zap className="h-3 w-3 mr-1" />
@@ -61,7 +89,7 @@ export function AppCard({ app, onClick }: AppCardProps) {
           {app.description}
         </p>
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span>User: {app.intendedUser}</span>
+          {app.intendedUser && <span>User: {app.intendedUser}</span>}
           {flagCount > 0 && (
             <span className={unacknowledgedFlags > 0 ? 'text-warning' : 'text-muted-foreground'}>
               {unacknowledgedFlags > 0 ? `${unacknowledgedFlags} unreviewed flag(s)` : `${flagCount} flag(s) reviewed`}
