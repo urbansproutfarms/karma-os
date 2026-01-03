@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { AppIntake, AppStatus, AppOrigin, AppAgentReview, AppAgentFlag, AIAgentType, VercelReadinessChecklist, AppLifecycle, DataLayerType } from '@/types/karma';
+import { AppIntake, AppStatus, AppOrigin, AppAgentReview, AppAgentFlag, AIAgentType, VercelReadinessChecklist, AppLifecycle, DataLayerType, AppSource, BuildPriority } from '@/types/karma';
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '@/lib/storage';
 import { useAuditLog } from './useAuditLog';
 
@@ -21,9 +21,12 @@ function normalizeApp(app: Partial<AppIntake>): AppIntake | null {
   return {
     id: app.id,
     name: app.name,
+    displayName: app.displayName,
     alias: app.alias,
     origin: app.origin || 'other',
+    source: app.source,
     category: app.category,
+    productType: app.productType,
     description: app.description || '',
     intendedUser: app.intendedUser || '',
     mvpScope: app.mvpScope || '',
@@ -33,10 +36,16 @@ function normalizeApp(app: Partial<AppIntake>): AppIntake | null {
     isActive: app.isActive ?? false,
     isInternal: app.isInternal ?? false,
     lifecycle: app.lifecycle || 'external',
+    excludeFromLaunchMetrics: app.excludeFromLaunchMetrics ?? false,
+    excludeFromPublicLists: app.excludeFromPublicLists ?? false,
+    buildPriority: app.buildPriority,
     ownerConfirmed: app.ownerConfirmed ?? false,
     ownerEntity: app.ownerEntity || 'Clearpath Technologies LLC',
     repoUrl: app.repoUrl || '',
+    publishedUrl: app.publishedUrl,
     assetOwnershipConfirmed: app.assetOwnershipConfirmed ?? false,
+    complianceFlags: app.complianceFlags,
+    modulesPresent: app.modulesPresent,
     agentReviewComplete: app.agentReviewComplete ?? false,
     productSpecReview: app.productSpecReview,
     riskIntegrityReview: app.riskIntegrityReview,
@@ -132,10 +141,103 @@ function migrateClearpathLaunchDashboard(apps: AppIntake[]): { apps: AppIntake[]
   return { apps: migratedApps, wasMigrated };
 }
 
+// Migration to dedupe/normalize systembuilderOS variants
+function migrateSystemBuilderOS(apps: AppIntake[]): { apps: AppIntake[]; wasMigrated: boolean } {
+  let wasMigrated = false;
+  const variantNames = ['System Builder OS', 'SystemBuilderOS', 'Builder OS', 'system builder os', 'systembuilderos'];
+  
+  const migratedApps = apps.map(app => {
+    const lowerName = app.name.toLowerCase();
+    // Check if this is a variant that needs normalization
+    if (variantNames.map(v => v.toLowerCase()).includes(lowerName) && app.name !== 'systembuilderOS') {
+      wasMigrated = true;
+      return {
+        ...app,
+        name: 'systembuilderOS',
+        displayName: 'System Builder OS',
+        updatedAt: new Date().toISOString(),
+      };
+    }
+    return app;
+  });
+  
+  return { apps: migratedApps, wasMigrated };
+}
+
+// Ensure systembuilderOS exists in the apps list (inject if missing)
+function ensureSystemBuilderOS(apps: AppIntake[]): { apps: AppIntake[]; wasAdded: boolean } {
+  const exists = apps.some(app => app.name === 'systembuilderOS');
+  if (exists) {
+    return { apps, wasAdded: false };
+  }
+  
+  // Create systembuilderOS entry
+  const systemBuilderOS: AppIntake = {
+    id: crypto.randomUUID(),
+    name: 'systembuilderOS',
+    displayName: 'System Builder OS',
+    origin: 'other',
+    source: 'github' as AppSource,
+    category: 'Governance / Infrastructure',
+    productType: 'System Builder / Orchestration',
+    description: 'Internal system orchestration and build management platform sourced from GitHub.',
+    intendedUser: 'Founder / Internal',
+    mvpScope: 'Core orchestration, build pipeline management, repo sync',
+    nonGoals: 'Not a public-facing product',
+    riskNotes: 'Internal infrastructure only',
+    status: 'unreviewed',
+    isActive: false,
+    isInternal: true,
+    lifecycle: 'internal-only' as AppLifecycle,
+    excludeFromLaunchMetrics: true,
+    excludeFromPublicLists: true,
+    buildPriority: 'first' as BuildPriority,
+    ownerConfirmed: false,
+    ownerEntity: 'Clearpath Technologies LLC',
+    repoUrl: '', // Placeholder - user should paste GitHub URL
+    assetOwnershipConfirmed: false,
+    agentReviewComplete: false,
+    trafficLight: 'yellow',
+    dataLayer: 'none_local' as DataLayerType,
+    vercelReadiness: { ...DEFAULT_VERCEL_READINESS },
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  
+  return { apps: [systemBuilderOS, ...apps], wasAdded: true };
+}
+
 // Initial seed data for Clearpath apps
 const SEED_APPS: Omit<AppIntake, 'id' | 'createdAt' | 'updatedAt'>[] = [
   { name: 'KarmaOS', origin: 'lovable', description: 'Internal founder operating system for governance, compliance, and launch control', intendedUser: 'Founder', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, isInternal: true, lifecycle: 'internal-only', ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
   { name: 'ClearPath Launch Dashboard', origin: 'lovable', description: 'Internal view for launch readiness within KarmaOS', intendedUser: 'Founder', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, isInternal: true, lifecycle: 'internal-only', ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
+  { 
+    name: 'systembuilderOS',
+    displayName: 'System Builder OS',
+    origin: 'other',
+    source: 'github' as AppSource,
+    category: 'Governance / Infrastructure',
+    productType: 'System Builder / Orchestration',
+    description: 'Internal system orchestration and build management platform sourced from GitHub.',
+    intendedUser: 'Founder / Internal',
+    mvpScope: 'Core orchestration, build pipeline management, repo sync',
+    nonGoals: 'Not a public-facing product',
+    riskNotes: 'Internal infrastructure only',
+    status: 'unreviewed',
+    isActive: false,
+    isInternal: true,
+    lifecycle: 'internal-only' as AppLifecycle,
+    excludeFromLaunchMetrics: true,
+    excludeFromPublicLists: true,
+    buildPriority: 'first' as BuildPriority,
+    ownerConfirmed: false,
+    ownerEntity: 'Clearpath Technologies LLC',
+    repoUrl: '', // Placeholder - user should paste GitHub URL
+    assetOwnershipConfirmed: false,
+    agentReviewComplete: false,
+    trafficLight: 'yellow',
+    dataLayer: 'none_local' as DataLayerType,
+  },
   { 
     name: 'FieldPass Ready', 
     origin: 'lovable', 
@@ -228,7 +330,13 @@ export function useApps() {
           
           // Run ClearPath Launch Dashboard migration
           const { apps: clearpathMigrated, wasMigrated: clearpathWasMigrated } = migrateClearpathLaunchDashboard(growOsMigrated);
-          loadedApps = clearpathMigrated;
+          
+          // Run systembuilderOS dedupe migration
+          const { apps: systemBuilderMigrated, wasMigrated: systemBuilderWasMigrated } = migrateSystemBuilderOS(clearpathMigrated);
+          
+          // Ensure systembuilderOS exists (inject if missing)
+          const { apps: withSystemBuilder, wasAdded: systemBuilderWasAdded } = ensureSystemBuilderOS(systemBuilderMigrated);
+          loadedApps = withSystemBuilder;
           
           // If Grow OS migration occurred, log it
           if (growOsWasMigrated) {
@@ -266,6 +374,43 @@ export function useApps() {
                 }
               );
             }, 0);
+          }
+          
+          // If systembuilderOS migration occurred, log it
+          if (systemBuilderWasMigrated) {
+            setTimeout(() => {
+              logActivity(
+                'Normalized System Builder OS → systembuilderOS',
+                'app',
+                'system',
+                'system',
+                {
+                  action: 'Dedupe/normalize systembuilderOS variants',
+                  canonical: 'systembuilderOS',
+                }
+              );
+            }, 0);
+          }
+          
+          // If systembuilderOS was added, log it
+          if (systemBuilderWasAdded) {
+            const systemBuilder = loadedApps.find(a => a.name === 'systembuilderOS');
+            if (systemBuilder) {
+              setTimeout(() => {
+                logActivity(
+                  'Added systembuilderOS as managed internal project',
+                  'app',
+                  systemBuilder.id,
+                  'system',
+                  {
+                    source: 'github',
+                    lifecycle: 'internal-only',
+                    excludeFromLaunchMetrics: true,
+                    buildPriority: 'first',
+                  }
+                );
+              }, 0);
+            }
           }
           
           // Save normalized/migrated data back to storage

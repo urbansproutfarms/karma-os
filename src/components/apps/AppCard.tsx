@@ -1,7 +1,8 @@
 import { AppIntake, AppStatus, VercelReadinessChecklist, DATA_LAYER_LABELS, AppLifecycle } from '@/types/karma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Package, AlertTriangle, CheckCircle, PauseCircle, XCircle, Zap, Database, Globe, Lock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Package, AlertTriangle, CheckCircle, PauseCircle, XCircle, Zap, Database, Globe, Lock, Github, ExternalLink } from 'lucide-react';
 
 interface AppCardProps {
   app: AppIntake;
@@ -61,10 +62,16 @@ export function AppCard({ app, onClick, isLaunchApproved = false }: AppCardProps
             </div>
             <div>
               <CardTitle className="text-base flex items-center gap-2">
-                {app.name}
+                {app.displayName || app.name}
                 {(app.isInternal || app.lifecycle === 'internal-only') && (
                   <Badge variant="outline" className="text-xs text-muted-foreground">
                     Internal
+                  </Badge>
+                )}
+                {app.source === 'github' && (
+                  <Badge variant="outline" className="text-xs">
+                    <Github className="h-3 w-3 mr-1" />
+                    GitHub
                   </Badge>
                 )}
                 {isLaunchApproved && (
@@ -114,6 +121,23 @@ export function AppCard({ app, onClick, isLaunchApproved = false }: AppCardProps
             </span>
           )}
         </div>
+        {/* Repo Link */}
+        {app.repoUrl && (
+          <div className="mt-2 flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(app.repoUrl, '_blank', 'noopener,noreferrer');
+              }}
+            >
+              <ExternalLink className="h-3 w-3 mr-1" />
+              Open Repo
+            </Button>
+          </div>
+        )}
         {!app.ownerConfirmed && app.status !== 'unreviewed' && (
           <div className="mt-2 flex items-center gap-1 text-xs text-warning">
             <AlertTriangle className="h-3 w-3" />

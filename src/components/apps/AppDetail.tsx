@@ -11,7 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Package, ArrowLeft, Bot, AlertTriangle, CheckCircle, 
   PauseCircle, XCircle, Zap, Shield, FileText, GitBranch,
-  Check, X, Database, Globe
+  Check, X, Database, Globe, Github, ExternalLink
 } from 'lucide-react';
 import { RepairPromptCard } from './RepairPromptCard';
 import { VercelReadinessChecklistCard } from './VercelReadinessChecklist';
@@ -116,10 +116,16 @@ export function AppDetail({
             </div>
             <div>
               <h1 className="text-xl font-semibold flex items-center gap-2">
-                {app.name}
+                {app.displayName || app.name}
                 {(app.isInternal || app.lifecycle === 'internal-only') && (
                   <Badge variant="outline" className="text-muted-foreground">
                     Internal Module
+                  </Badge>
+                )}
+                {app.source === 'github' && (
+                  <Badge variant="outline">
+                    <Github className="h-3 w-3 mr-1" />
+                    GitHub
                   </Badge>
                 )}
                 {app.isActive && (
@@ -375,9 +381,20 @@ export function AppDetail({
                 )}
               </div>
               {app.repoUrl ? (
-                <div>
+                <div className="space-y-2">
                   <Label className="text-xs text-muted-foreground">Repository</Label>
-                  <p className="text-sm mt-1 truncate">{app.repoUrl}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm truncate flex-1">{app.repoUrl}</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0"
+                      onClick={() => window.open(app.repoUrl, '_blank', 'noopener,noreferrer')}
+                    >
+                      <ExternalLink className="h-3 w-3 mr-1" />
+                      Open
+                    </Button>
+                  </div>
                 </div>
               ) : null}
 
