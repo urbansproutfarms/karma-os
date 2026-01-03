@@ -105,6 +105,7 @@ function migrateClearpathLaunchDashboard(apps: AppIntake[]): { apps: AppIntake[]
   let wasMigrated = false;
   
   const migratedApps = apps.map(app => {
+    // Mark ClearPath Launch Dashboard as internal
     if (app.name === 'ClearPath Launch Dashboard' && !app.isInternal) {
       wasMigrated = true;
       return {
@@ -112,6 +113,16 @@ function migrateClearpathLaunchDashboard(apps: AppIntake[]): { apps: AppIntake[]
         isInternal: true,
         lifecycle: 'internal-only' as AppLifecycle,
         description: 'Internal view for launch readiness within KarmaOS',
+        updatedAt: new Date().toISOString(),
+      };
+    }
+    // Mark KarmaOS as internal (it's the single internal application)
+    if (app.name === 'KarmaOS' && !app.isInternal) {
+      wasMigrated = true;
+      return {
+        ...app,
+        isInternal: true,
+        lifecycle: 'internal-only' as AppLifecycle,
         updatedAt: new Date().toISOString(),
       };
     }
@@ -123,7 +134,7 @@ function migrateClearpathLaunchDashboard(apps: AppIntake[]): { apps: AppIntake[]
 
 // Initial seed data for Clearpath apps
 const SEED_APPS: Omit<AppIntake, 'id' | 'createdAt' | 'updatedAt'>[] = [
-  { name: 'KarmaOS', origin: 'lovable', description: 'Internal founder operating system for governance, compliance, and launch control', intendedUser: 'Founder', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, isInternal: false, lifecycle: 'external', ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
+  { name: 'KarmaOS', origin: 'lovable', description: 'Internal founder operating system for governance, compliance, and launch control', intendedUser: 'Founder', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, isInternal: true, lifecycle: 'internal-only', ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
   { name: 'ClearPath Launch Dashboard', origin: 'lovable', description: 'Internal view for launch readiness within KarmaOS', intendedUser: 'Founder', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, isInternal: true, lifecycle: 'internal-only', ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
   { name: 'Plant Air IQ', origin: 'other', description: 'Provides informational plant references related to indoor air quality', intendedUser: 'Consumers', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'yellow' },
   { name: 'Plant Lens', origin: 'rork', description: 'Image-based plant identification and reference tool', intendedUser: 'Consumers', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'yellow' },
@@ -199,24 +210,21 @@ export function useApps() {
             }
           }
           
-          // If ClearPath Launch Dashboard migration occurred, log it
+          // If ClearPath Launch Dashboard or KarmaOS migration occurred, log it
           if (clearpathWasMigrated) {
-            const clearpath = loadedApps.find(a => a.name === 'ClearPath Launch Dashboard');
-            if (clearpath) {
-              setTimeout(() => {
-                logActivity(
-                  'Merged ClearPath Launch Dashboard into KarmaOS as internal module',
-                  'app',
-                  clearpath.id,
-                  'system',
-                  {
-                    isInternal: true,
-                    lifecycle: 'internal-only',
-                    description: 'Internal view for launch readiness within KarmaOS',
-                  }
-                );
-              }, 0);
-            }
+            setTimeout(() => {
+              logActivity(
+                'Governance cleanup: products vs internal + lifecycle tagging',
+                'app',
+                'system',
+                'system',
+                {
+                  action: 'Marked KarmaOS and ClearPath Launch Dashboard as internal',
+                  productsOnly: true,
+                  lifecycleTagging: true,
+                }
+              );
+            }, 0);
           }
           
           // Save normalized/migrated data back to storage
@@ -599,6 +607,23 @@ export function useApps() {
     logActivity('app_data_layer_updated', 'app', appId, 'founder', { dataLayer });
   }, [apps, saveApps, logActivity]);
 
+  // Update lifecycle for an app
+  const updateLifecycle = useCallback((appId: string, lifecycle: AppLifecycle) => {
+    const isInternal = lifecycle === 'internal-only';
+    const updated = apps.map(app =>
+      app.id === appId
+        ? { ...app, lifecycle, isInternal, updatedAt: new Date().toISOString() }
+        : app
+    );
+    saveApps(updated);
+    logActivity('app_lifecycle_updated', 'app', appId, 'founder', { lifecycle, isInternal });
+  }, [apps, saveApps, logActivity]);
+
+  // Get external apps only (for Projects list - products only)
+  const getExternalApps = useCallback((): AppIntake[] => {
+    return apps.filter(a => !a.isInternal && a.lifecycle !== 'internal-only');
+  }, [apps]);
+
   return {
     apps,
     isLoading,
@@ -617,8 +642,10 @@ export function useApps() {
     hasUnacknowledgedFlags,
     updateVercelReadiness,
     updateDataLayer,
+    updateLifecycle,
     isLaunchApproved,
     getLaunchApprovedApps,
     getLaunchableApps,
+    getExternalApps,
   };
 }

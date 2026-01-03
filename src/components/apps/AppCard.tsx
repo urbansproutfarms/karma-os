@@ -1,7 +1,7 @@
-import { AppIntake, AppStatus, VercelReadinessChecklist, DATA_LAYER_LABELS } from '@/types/karma';
+import { AppIntake, AppStatus, VercelReadinessChecklist, DATA_LAYER_LABELS, AppLifecycle } from '@/types/karma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Package, AlertTriangle, CheckCircle, PauseCircle, XCircle, Zap, Database } from 'lucide-react';
+import { Package, AlertTriangle, CheckCircle, PauseCircle, XCircle, Zap, Database, Globe, Lock } from 'lucide-react';
 
 interface AppCardProps {
   app: AppIntake;
@@ -91,6 +91,15 @@ export function AppCard({ app, onClick, isLaunchApproved = false }: AppCardProps
           {app.description}
         </p>
         <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+          {/* Lifecycle */}
+          <span className="flex items-center gap-1">
+            {app.lifecycle === 'internal-only' ? (
+              <Lock className="h-3 w-3" />
+            ) : (
+              <Globe className="h-3 w-3" />
+            )}
+            {app.lifecycle === 'internal-only' ? 'Internal' : 'External'}
+          </span>
           {app.intendedUser && <span>User: {app.intendedUser}</span>}
           <span className="flex items-center gap-1">
             <Database className="h-3 w-3" />

@@ -3,7 +3,7 @@ import { AppIntake, VercelReadinessChecklist, DATA_LAYER_LABELS } from '@/types/
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Gauge, Package, CheckCircle, AlertTriangle, XCircle, Rocket, RefreshCw, Database } from 'lucide-react';
+import { Gauge, Package, CheckCircle, AlertTriangle, XCircle, Rocket, RefreshCw, Database, Globe } from 'lucide-react';
 
 interface LaunchDashboardProps {
   apps: AppIntake[];
@@ -368,8 +368,12 @@ function AppRow({ app, onClick, isLaunchApproved }: { app: AppIntake; onClick: (
         </div>
       </div>
       
-      {/* Right Side: Data Layer + Status + Checklist - wraps below on mobile */}
+      {/* Right Side: Lifecycle + Data Layer + Status + Checklist - wraps below on mobile */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0 pl-5 sm:pl-0 flex-wrap">
+        <Badge variant="outline" className="text-xs font-normal flex items-center gap-1">
+          <Globe className="h-3 w-3" />
+          <span>External</span>
+        </Badge>
         <Badge variant="outline" className="text-xs font-normal flex items-center gap-1">
           <Database className="h-3 w-3" />
           <span className="hidden sm:inline">{DATA_LAYER_LABELS[app.dataLayer || 'none_local']}</span>

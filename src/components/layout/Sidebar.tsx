@@ -20,6 +20,7 @@ import {
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from './ThemeToggle';
 
 interface SidebarProps {
   currentView: string;
@@ -124,9 +125,12 @@ export function Sidebar({ currentView, onViewChange, onNewIdea }: SidebarProps) 
 
         {/* Footer */}
         <div className="p-4 border-t border-sidebar-border">
-          <p className="text-xs text-muted-foreground">
-            Clearpath Technologies LLC
-          </p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-muted-foreground">
+              Clearpath Technologies LLC
+            </p>
+            <ThemeToggle />
+          </div>
           <p className="text-xs text-muted-foreground/60">
             Wyoming
           </p>

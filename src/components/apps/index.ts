@@ -8,3 +8,4 @@ export { VercelReadinessChecklistCard, getVercelReadinessScore } from './VercelR
 export { VercelPWAPromptCard } from './VercelPWAPromptCard';
 export { LaunchPromptsCard } from './LaunchPromptsCard';
 export { DataLayerSelect } from './DataLayerSelect';
+export { LifecycleSelect } from './LifecycleSelect';
