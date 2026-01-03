@@ -16,6 +16,7 @@ const STORAGE_KEYS = {
   EVALUATIONS: 'karmaos_evaluations',
   QUESTIONNAIRES: 'karmaos_questionnaires',
   APPS: 'karmaos_apps',
+  COMMANDS: 'karmaos_commands',
 } as const;
 
 export function getStorageItem<T>(key: string): T | null {
