@@ -35,26 +35,26 @@ export function LaunchDashboard({ apps, onAppClick, isLaunchApproved, dataWasRes
   const launchApprovedApps = apps.filter(a => isLaunchApproved(a.id));
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
+    <div className="w-full min-w-0 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8">
       {/* Data Reset Notice */}
       {dataWasReset && (
         <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
-          <RefreshCw className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-800 dark:text-amber-200">
+          <RefreshCw className="h-4 w-4 text-amber-600 shrink-0" />
+          <AlertDescription className="text-amber-800 dark:text-amber-200 break-words">
             App data was recovered from defaults due to storage issues. Your previous customizations may need to be re-entered.
           </AlertDescription>
         </Alert>
       )}
 
       {/* Header */}
-      <div className="border-b pb-6">
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 shadow-sm">
-            <Gauge className="h-6 w-6 text-primary" />
+      <div className="border-b pb-4 sm:pb-6">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 shadow-sm shrink-0">
+            <Gauge className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
           </div>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Launch Dashboard</h1>
-            <p className="text-muted-foreground mt-0.5">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight truncate">Launch Dashboard</h1>
+            <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">
               Internal ClearPath + KarmaOS launch readiness view
             </p>
           </div>
@@ -62,7 +62,7 @@ export function LaunchDashboard({ apps, onAppClick, isLaunchApproved, dataWasRes
       </div>
 
       {/* Summary Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           icon={<CheckCircle className="h-5 w-5 text-emerald-600" />}
           count={greenApps.length}
@@ -99,26 +99,26 @@ export function LaunchDashboard({ apps, onAppClick, isLaunchApproved, dataWasRes
 
       {/* Launch-Approved Stat */}
       <Card 
-        className={`cursor-pointer transition-all duration-200 border-2 ${
+        className={`w-full min-w-0 cursor-pointer transition-all duration-200 border-2 ${
           filter === 'launch-approved' 
             ? 'border-primary bg-primary/5 shadow-md' 
             : 'border-primary/20 hover:border-primary/40 hover:bg-primary/5'
         }`}
         onClick={() => setFilter(filter === 'launch-approved' ? 'all' : 'launch-approved')}
       >
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-primary/10">
-                <Rocket className="h-6 w-6 text-primary" />
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+              <div className="p-2.5 sm:p-3 rounded-xl bg-primary/10 shrink-0">
+                <Rocket className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
-              <div>
-                <p className="text-3xl font-bold tracking-tight">{launchApprovedApps.length}</p>
-                <p className="text-sm text-muted-foreground font-medium">🚀 Launch-Approved</p>
+              <div className="min-w-0">
+                <p className="text-2xl sm:text-3xl font-bold tracking-tight">{launchApprovedApps.length}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground font-medium">🚀 Launch-Approved</p>
               </div>
             </div>
             {filter === 'launch-approved' && (
-              <Badge variant="default" className="px-3 py-1">Filtered</Badge>
+              <Badge variant="default" className="px-2.5 py-0.5 sm:px-3 sm:py-1 shrink-0">Filtered</Badge>
             )}
           </div>
         </CardContent>
@@ -126,12 +126,14 @@ export function LaunchDashboard({ apps, onAppClick, isLaunchApproved, dataWasRes
       
       {/* Filter indicator */}
       {filter === 'launch-approved' && (
-        <div className="flex items-center gap-3 px-5 py-3 bg-primary/5 border border-primary/20 rounded-xl">
-          <Rocket className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium text-primary">Showing Launch-Approved apps only</span>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 bg-primary/5 border border-primary/20 rounded-xl">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Rocket className="h-4 w-4 text-primary shrink-0" />
+            <span className="text-sm font-medium text-primary">Showing Launch-Approved apps only</span>
+          </div>
           <button 
             onClick={() => setFilter('all')}
-            className="ml-auto text-sm text-primary hover:underline font-medium"
+            className="sm:ml-auto text-sm text-primary hover:underline font-medium"
           >
             Show all
           </button>
@@ -140,29 +142,29 @@ export function LaunchDashboard({ apps, onAppClick, isLaunchApproved, dataWasRes
 
       {/* Launch-Approved Section */}
       {launchApprovedApps.length > 0 && filter === 'all' && (
-        <Card className="border-primary/20 bg-gradient-to-b from-primary/5 to-transparent">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2 font-semibold">
-              <span className="text-xl">🚀</span>
-              Launch-Approved
-              <Badge variant="secondary" className="ml-2 font-normal">{launchApprovedApps.length}</Badge>
+        <Card className="w-full min-w-0 border-primary/20 bg-gradient-to-b from-primary/5 to-transparent">
+          <CardHeader className="pb-3 sm:pb-4">
+            <CardTitle className="text-base sm:text-lg flex items-center gap-2 font-semibold flex-wrap">
+              <span className="text-lg sm:text-xl">🚀</span>
+              <span>Launch-Approved</span>
+              <Badge variant="secondary" className="ml-1 sm:ml-2 font-normal">{launchApprovedApps.length}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
               {launchApprovedApps.map(app => (
                 <div 
                   key={app.id}
-                  className="group p-4 rounded-xl bg-background border border-primary/20 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all duration-200"
+                  className="group p-3 sm:p-4 rounded-xl bg-background border border-primary/20 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all duration-200 min-w-0"
                   onClick={() => onAppClick(app)}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg">🚀</span>
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <span className="text-base sm:text-lg shrink-0">🚀</span>
                     <div className="flex-1 min-w-0">
                       <span className="font-semibold text-sm block truncate">{app.name}</span>
                       <span className="text-xs text-primary/70">Ready to deploy</span>
                     </div>
-                    <Badge variant="default" className="text-xs shrink-0">Approved</Badge>
+                    <Badge variant="default" className="text-xs shrink-0 hidden sm:inline-flex">Approved</Badge>
                   </div>
                 </div>
               ))}
@@ -173,7 +175,7 @@ export function LaunchDashboard({ apps, onAppClick, isLaunchApproved, dataWasRes
 
       {/* Apps by Traffic Light */}
       {filter === 'all' && (
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8">
           {/* Green Apps */}
           {greenApps.length > 0 && (
             <AppSection
@@ -277,15 +279,15 @@ function StatCard({
   iconBgClass: string;
 }) {
   return (
-    <Card className={`${bgClass} ${borderClass} border shadow-sm`}>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-3">
-          <div className={`p-2.5 rounded-xl ${iconBgClass}`}>
+    <Card className={`${bgClass} ${borderClass} border shadow-sm min-w-0`}>
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div className={`p-2 sm:p-2.5 rounded-xl ${iconBgClass} shrink-0`}>
             {icon}
           </div>
-          <div>
-            <p className="text-2xl font-bold tracking-tight">{count}</p>
-            <p className="text-xs text-muted-foreground font-medium">{label}</p>
+          <div className="min-w-0">
+            <p className="text-xl sm:text-2xl font-bold tracking-tight">{count}</p>
+            <p className="text-xs text-muted-foreground font-medium truncate">{label}</p>
           </div>
         </div>
       </CardContent>
@@ -337,31 +339,34 @@ function AppRow({ app, onClick, isLaunchApproved }: { app: AppIntake; onClick: (
 
   return (
     <div 
-      className="group flex items-center gap-4 p-4 rounded-xl bg-card border border-border/60 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all duration-200"
+      className="group w-full min-w-0 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3 sm:p-4 rounded-xl bg-card border border-border/60 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all duration-200"
       onClick={onClick}
     >
-      {/* Status Indicator */}
-      <div className="flex items-center gap-3 shrink-0">
-        {trafficConfig ? (
-          <span className={`w-2.5 h-2.5 rounded-full ${trafficConfig.color}`} />
-        ) : (
-          <span className="w-2.5 h-2.5 rounded-full bg-muted-foreground/30" />
-        )}
-      </div>
-      
-      {/* App Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-sm">{app.name}</span>
-          {isLaunchApproved && <span className="text-sm">🚀</span>}
+      {/* Top row on mobile: Status + App Name + Rocket */}
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        {/* Status Indicator */}
+        <div className="shrink-0">
+          {trafficConfig ? (
+            <span className={`w-2.5 h-2.5 rounded-full ${trafficConfig.color} block`} />
+          ) : (
+            <span className="w-2.5 h-2.5 rounded-full bg-muted-foreground/30 block" />
+          )}
         </div>
-        <p className="text-xs text-muted-foreground truncate mt-0.5">
-          {app.description || 'No description'}
-        </p>
+        
+        {/* App Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="font-semibold text-sm truncate">{app.name}</span>
+            {isLaunchApproved && <span className="text-sm shrink-0">🚀</span>}
+          </div>
+          <p className="text-xs text-muted-foreground line-clamp-1 break-words mt-0.5">
+            {app.description || 'No description'}
+          </p>
+        </div>
       </div>
       
-      {/* Right Side: Status + Checklist */}
-      <div className="flex items-center gap-3 shrink-0">
+      {/* Right Side: Status + Checklist - wraps below on mobile */}
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0 pl-5 sm:pl-0">
         <Badge variant="outline" className="text-xs capitalize font-normal">
           {app.status.replace('_', ' ')}
         </Badge>
