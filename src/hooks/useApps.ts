@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { AppIntake, AppStatus, AppOrigin, AppAgentReview, AppAgentFlag, AIAgentType, VercelReadinessChecklist, AppLifecycle } from '@/types/karma';
+import { AppIntake, AppStatus, AppOrigin, AppAgentReview, AppAgentFlag, AIAgentType, VercelReadinessChecklist, AppLifecycle, DataLayerType } from '@/types/karma';
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '@/lib/storage';
 import { useAuditLog } from './useAuditLog';
 
@@ -46,6 +46,7 @@ function normalizeApp(app: Partial<AppIntake>): AppIntake | null {
     founderDecisionBy: app.founderDecisionBy,
     trafficLight: app.trafficLight,
     vercelReadiness: app.vercelReadiness || { ...DEFAULT_VERCEL_READINESS },
+    dataLayer: app.dataLayer || 'none_local',
     createdAt: app.createdAt || new Date().toISOString(),
     updatedAt: app.updatedAt || new Date().toISOString(),
     archivedAt: app.archivedAt,
@@ -587,6 +588,17 @@ export function useApps() {
     return apps.filter(a => !a.isInternal && a.lifecycle !== 'internal-only');
   }, [apps]);
 
+  // Update data layer for an app
+  const updateDataLayer = useCallback((appId: string, dataLayer: DataLayerType) => {
+    const updated = apps.map(app =>
+      app.id === appId
+        ? { ...app, dataLayer, updatedAt: new Date().toISOString() }
+        : app
+    );
+    saveApps(updated);
+    logActivity('app_data_layer_updated', 'app', appId, 'founder', { dataLayer });
+  }, [apps, saveApps, logActivity]);
+
   return {
     apps,
     isLoading,
@@ -604,6 +616,7 @@ export function useApps() {
     canProceedToBuild,
     hasUnacknowledgedFlags,
     updateVercelReadiness,
+    updateDataLayer,
     isLaunchApproved,
     getLaunchApprovedApps,
     getLaunchableApps,

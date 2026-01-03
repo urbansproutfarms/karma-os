@@ -266,6 +266,16 @@ export interface VercelReadinessChecklist {
 // App Lifecycle Type
 export type AppLifecycle = 'external' | 'internal-only';
 
+// Data Layer Type
+export type DataLayerType = 'none_local' | 'supabase_shared' | 'supabase_dedicated' | 'other';
+
+export const DATA_LAYER_LABELS: Record<DataLayerType, string> = {
+  none_local: 'None (local-only)',
+  supabase_shared: 'Supabase (shared)',
+  supabase_dedicated: 'Supabase (dedicated)',
+  other: 'Other',
+};
+
 export interface AppIntake {
   id: string;
   name: string;
@@ -299,6 +309,8 @@ export interface AppIntake {
   // Launch Readiness
   trafficLight?: 'green' | 'yellow' | 'red';
   vercelReadiness?: VercelReadinessChecklist;
+  // Data Layer
+  dataLayer?: DataLayerType;
   // Metadata
   createdAt: string;
   updatedAt: string;
