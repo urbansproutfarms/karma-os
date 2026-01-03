@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { AppIntake, AppStatus, AppOrigin, VercelReadinessChecklist } from '@/types/karma';
+import { AppIntake, AppStatus, AppOrigin, VercelReadinessChecklist, DataLayerType, DATA_LAYER_LABELS } from '@/types/karma';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -59,6 +59,7 @@ interface AppListProps {
   onConfirmOwnership: (appId: string, repoUrl: string) => void;
   onAcknowledgeFlag: (appId: string, flagId: string, reviewType: 'productSpecReview' | 'riskIntegrityReview') => void;
   onUpdateVercelReadiness?: (appId: string, checklist: VercelReadinessChecklist) => void;
+  onUpdateDataLayer?: (appId: string, dataLayer: DataLayerType) => void;
   canProceedToBuild: (appId: string) => boolean;
   getActiveApp: () => AppIntake | undefined;
   isLaunchApproved?: (appId: string) => boolean;
@@ -76,6 +77,7 @@ export function AppList({
   onConfirmOwnership,
   onAcknowledgeFlag,
   onUpdateVercelReadiness,
+  onUpdateDataLayer,
   canProceedToBuild,
   getActiveApp,
   isLaunchApproved,
@@ -166,6 +168,7 @@ export function AppList({
         onConfirmOwnership={onConfirmOwnership}
         onAcknowledgeFlag={onAcknowledgeFlag}
         onUpdateVercelReadiness={onUpdateVercelReadiness}
+        onUpdateDataLayer={onUpdateDataLayer}
         canProceedToBuild={canProceedToBuild(selectedApp.id)}
       />
     );

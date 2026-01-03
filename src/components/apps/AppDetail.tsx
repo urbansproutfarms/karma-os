@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AppIntake, AppAgentFlag, VercelReadinessChecklist } from '@/types/karma';
+import { AppIntake, AppAgentFlag, VercelReadinessChecklist, DataLayerType, DATA_LAYER_LABELS } from '@/types/karma';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,11 +11,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Package, ArrowLeft, Bot, AlertTriangle, CheckCircle, 
   PauseCircle, XCircle, Zap, Shield, FileText, GitBranch,
-  Check, X
+  Check, X, Database
 } from 'lucide-react';
 import { RepairPromptCard } from './RepairPromptCard';
 import { VercelReadinessChecklistCard } from './VercelReadinessChecklist';
 import { VercelPWAPromptCard } from './VercelPWAPromptCard';
+import { LaunchPromptsCard } from './LaunchPromptsCard';
+import { DataLayerSelect } from './DataLayerSelect';
 
 interface AppDetailProps {
   app: AppIntake;
@@ -26,6 +28,7 @@ interface AppDetailProps {
   onConfirmOwnership: (appId: string, repoUrl: string) => void;
   onAcknowledgeFlag: (appId: string, flagId: string, reviewType: 'productSpecReview' | 'riskIntegrityReview') => void;
   onUpdateVercelReadiness?: (appId: string, checklist: VercelReadinessChecklist) => void;
+  onUpdateDataLayer?: (appId: string, dataLayer: DataLayerType) => void;
   canProceedToBuild: boolean;
 }
 
@@ -44,6 +47,7 @@ export function AppDetail({
   onConfirmOwnership,
   onAcknowledgeFlag,
   onUpdateVercelReadiness,
+  onUpdateDataLayer,
   canProceedToBuild,
 }: AppDetailProps) {
   const [repoUrl, setRepoUrl] = useState(app.repoUrl || '');
@@ -279,6 +283,26 @@ export function AppDetail({
 
         {/* Sidebar */}
         <div className="space-y-6">
+          {/* Data Layer */}
+          <Card className="border-border/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Database className="h-4 w-4" />
+                Data Layer
+              </CardTitle>
+              <CardDescription>How this app handles data persistence</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DataLayerSelect
+                value={app.dataLayer || 'none_local'}
+                onChange={(dataLayer) => onUpdateDataLayer?.(app.id, dataLayer)}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Launch Prompts */}
+          <LaunchPromptsCard app={app} />
+          
           {/* Repair Prompt for Yellow Apps */}
           <RepairPromptCard app={app} />
           

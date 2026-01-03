@@ -1,7 +1,7 @@
-import { AppIntake, AppStatus, VercelReadinessChecklist } from '@/types/karma';
+import { AppIntake, AppStatus, VercelReadinessChecklist, DATA_LAYER_LABELS } from '@/types/karma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Package, AlertTriangle, CheckCircle, PauseCircle, XCircle, Zap } from 'lucide-react';
+import { Package, AlertTriangle, CheckCircle, PauseCircle, XCircle, Zap, Database } from 'lucide-react';
 
 interface AppCardProps {
   app: AppIntake;
@@ -90,8 +90,12 @@ export function AppCard({ app, onClick, isLaunchApproved = false }: AppCardProps
         <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
           {app.description}
         </p>
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
           {app.intendedUser && <span>User: {app.intendedUser}</span>}
+          <span className="flex items-center gap-1">
+            <Database className="h-3 w-3" />
+            {DATA_LAYER_LABELS[app.dataLayer || 'none_local']}
+          </span>
           <span className={vercelScore.complete === vercelScore.total ? 'text-primary' : 'text-muted-foreground'}>
             Vercel: {vercelScore.complete}/{vercelScore.total}
           </span>

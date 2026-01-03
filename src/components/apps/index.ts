@@ -6,3 +6,5 @@ export { QuickRegisterForm } from './QuickRegisterForm';
 export { RepairPromptCard } from './RepairPromptCard';
 export { VercelReadinessChecklistCard, getVercelReadinessScore } from './VercelReadinessChecklist';
 export { VercelPWAPromptCard } from './VercelPWAPromptCard';
+export { LaunchPromptsCard } from './LaunchPromptsCard';
+export { DataLayerSelect } from './DataLayerSelect';
