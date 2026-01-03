@@ -5,3 +5,4 @@ export { AppList } from './AppList';
 export { QuickRegisterForm } from './QuickRegisterForm';
 export { RepairPromptCard } from './RepairPromptCard';
 export { VercelReadinessChecklistCard, getVercelReadinessScore } from './VercelReadinessChecklist';
+export { VercelPWAPromptCard } from './VercelPWAPromptCard';

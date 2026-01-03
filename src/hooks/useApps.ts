@@ -21,7 +21,9 @@ function normalizeApp(app: Partial<AppIntake>): AppIntake | null {
   return {
     id: app.id,
     name: app.name,
+    alias: app.alias,
     origin: app.origin || 'other',
+    category: app.category,
     description: app.description || '',
     intendedUser: app.intendedUser || '',
     mvpScope: app.mvpScope || '',
@@ -63,7 +65,7 @@ const SEED_APPS: Omit<AppIntake, 'id' | 'createdAt' | 'updatedAt'>[] = [
   { name: 'FarmCoin Network (Concept)', origin: 'lovable', description: 'Concept-stage network for coordinating contributions and rewards in farming communities', intendedUser: 'Farming communities', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'red' },
   { name: 'Local Harvest (Garden to Plate)', origin: 'lovable', description: 'Informational app connecting local growers with consumers', intendedUser: 'Growers and consumers', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'yellow' },
   { name: 'GrowCode Adventures', origin: 'lovable', description: 'Educational content platform for youth and families', intendedUser: 'Youth and families', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'yellow' },
-  { name: 'Farmers Almanac', origin: 'lovable', description: 'Seasonal planting guides, weather references, and traditional farming wisdom for growers', intendedUser: 'Farmers, gardeners, and homesteaders', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
+  { name: 'New Farmers Almanac', alias: 'Farmers Almanac', origin: 'other', category: 'Informational / Utility (Gardening/Farming)', description: 'Informational seasonal reference and gardening/farming guidance app.', intendedUser: 'Gardeners and growers.', mvpScope: 'Seasonal planting calendar, weather references, traditional farming wisdom', nonGoals: 'No e-commerce, no paid subscriptions, no medical/legal advice', riskNotes: 'Verify all seasonal data is region-appropriate; ensure no prescriptive health claims', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'yellow', repoUrl: 'https://github.com/urbansproutfarms/thegoodgarden' },
 ];
 
 // Create seeded apps with IDs and timestamps
@@ -111,6 +113,23 @@ export function useApps() {
         // No data - seed initial apps
         loadedApps = createSeededApps();
         setStorageItem(STORAGE_KEYS.APPS, loadedApps);
+        
+        // Log New Farmers Almanac registration
+        const farmersAlmanac = loadedApps.find(a => a.name === 'New Farmers Almanac');
+        if (farmersAlmanac) {
+          logActivity(
+            'New Farmers Almanac project registration + repo linking',
+            'app',
+            farmersAlmanac.id,
+            'system',
+            {
+              repoUrl: farmersAlmanac.repoUrl,
+              origin: 'GitHub (migrated from Google AI Studio)',
+              category: farmersAlmanac.category,
+              alias: farmersAlmanac.alias,
+            }
+          );
+        }
       }
     } catch (error) {
       // JSON parse failed or other error - reset to defaults

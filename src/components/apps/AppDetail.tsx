@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { RepairPromptCard } from './RepairPromptCard';
 import { VercelReadinessChecklistCard } from './VercelReadinessChecklist';
+import { VercelPWAPromptCard } from './VercelPWAPromptCard';
 
 interface AppDetailProps {
   app: AppIntake;
@@ -152,6 +153,18 @@ export function AppDetail({
                   <p className="text-sm mt-1 capitalize">{app.origin.replace('_', ' ')}</p>
                 </div>
               </div>
+              {app.alias && (
+                <div>
+                  <Label className="text-xs text-muted-foreground">Alias</Label>
+                  <p className="text-sm mt-1">{app.alias}</p>
+                </div>
+              )}
+              {app.category && (
+                <div>
+                  <Label className="text-xs text-muted-foreground">Category</Label>
+                  <p className="text-sm mt-1">{app.category}</p>
+                </div>
+              )}
               <div>
                 <Label className="text-xs text-muted-foreground">MVP Scope</Label>
                 <p className="text-sm mt-1">{app.mvpScope}</p>
@@ -263,6 +276,9 @@ export function AppDetail({
         <div className="space-y-6">
           {/* Repair Prompt for Yellow Apps */}
           <RepairPromptCard app={app} />
+          
+          {/* Vercel/PWA Prompt */}
+          <VercelPWAPromptCard app={app} />
           
           {/* Vercel/PWA Readiness Checklist */}
           <VercelReadinessChecklistCard 
