@@ -2,7 +2,8 @@ import { AppIntake, AppStatus, VercelReadinessChecklist, DATA_LAYER_LABELS, AppL
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, AlertTriangle, CheckCircle, PauseCircle, XCircle, Zap, Database, Globe, Lock, Github, ExternalLink } from 'lucide-react';
+import { Package, AlertTriangle, CheckCircle, PauseCircle, XCircle, Zap, Database, Globe, Lock, Github, ExternalLink, Play } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface AppCardProps {
   app: AppIntake;
@@ -31,6 +32,7 @@ function getVercelChecklistScore(checklist?: VercelReadinessChecklist): { comple
 }
 
 export function AppCard({ app, onClick, isLaunchApproved = false }: AppCardProps) {
+  const navigate = useNavigate();
   const statusConfig = STATUS_CONFIG[app.status];
   const StatusIcon = statusConfig.icon;
   const trafficConfig = app.trafficLight ? TRAFFIC_LIGHT_CONFIG[app.trafficLight] : null;
@@ -41,6 +43,13 @@ export function AppCard({ app, onClick, isLaunchApproved = false }: AppCardProps
     ...(app.productSpecReview?.flags.filter(f => !f.acknowledged) || []),
     ...(app.riskIntegrityReview?.flags.filter(f => !f.acknowledged) || []),
   ].length;
+
+  const handleOpenApp = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (app.route) {
+      navigate(app.route);
+    }
+  };
 
   return (
     <Card 
@@ -121,9 +130,20 @@ export function AppCard({ app, onClick, isLaunchApproved = false }: AppCardProps
             </span>
           )}
         </div>
-        {/* Repo Link */}
-        {app.repoUrl && (
-          <div className="mt-2 flex items-center gap-2">
+        {/* Action Buttons */}
+        <div className="mt-2 flex items-center gap-2">
+          {app.route && (
+            <Button
+              variant="default"
+              size="sm"
+              className="h-7 px-3 text-xs"
+              onClick={handleOpenApp}
+            >
+              <Play className="h-3 w-3 mr-1" />
+              Open
+            </Button>
+          )}
+          {app.repoUrl && (
             <Button
               variant="ghost"
               size="sm"
@@ -136,8 +156,8 @@ export function AppCard({ app, onClick, isLaunchApproved = false }: AppCardProps
               <ExternalLink className="h-3 w-3 mr-1" />
               Open Repo
             </Button>
-          </div>
-        )}
+          )}
+        </div>
         {!app.ownerConfirmed && app.status !== 'unreviewed' && (
           <div className="mt-2 flex items-center gap-1 text-xs text-warning">
             <AlertTriangle className="h-3 w-3" />

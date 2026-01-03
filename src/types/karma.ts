@@ -333,6 +333,7 @@ export interface AppIntake {
   ownerEntity: string; // Default: "Clearpath Technologies LLC"
   repoUrl?: string;
   publishedUrl?: string; // Lovable published URL
+  route?: string; // Internal route (e.g., "/systembuilderos")
   assetOwnershipConfirmed: boolean;
   // Compliance & Modules (for apps like FieldPass)
   complianceFlags?: AppComplianceFlags;
