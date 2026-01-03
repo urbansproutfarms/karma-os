@@ -33,8 +33,11 @@ function getBlockerCount(app: AppIntake): number {
   return blockers;
 }
 
-// Check if fully launch-approved
+// Check if fully launch-approved (excludes internal modules)
 function isFullyLaunchApproved(app: AppIntake): boolean {
+  // Internal modules are never launch-approved
+  if (app.isInternal || app.lifecycle === 'internal-only') return false;
+  
   if (app.trafficLight !== 'green') return false;
   if (!app.vercelReadiness) return false;
   const allChecked = Object.values(app.vercelReadiness).every(Boolean);

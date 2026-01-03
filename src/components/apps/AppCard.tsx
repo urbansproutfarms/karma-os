@@ -62,6 +62,11 @@ export function AppCard({ app, onClick, isLaunchApproved = false }: AppCardProps
             <div>
               <CardTitle className="text-base flex items-center gap-2">
                 {app.name}
+                {(app.isInternal || app.lifecycle === 'internal-only') && (
+                  <Badge variant="outline" className="text-xs text-muted-foreground">
+                    Internal
+                  </Badge>
+                )}
                 {isLaunchApproved && (
                   <span title="Launch Approved" className="text-lg">🚀</span>
                 )}

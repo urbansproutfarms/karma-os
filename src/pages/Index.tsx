@@ -287,6 +287,7 @@ const Index = () => {
           onAcknowledgeFlag={(id, flagId, reviewType) => { acknowledgeFlag(id, flagId, reviewType); }}
           canProceedToBuild={canProceedToBuild}
           getActiveApp={getActiveApp}
+          isLaunchApproved={isLaunchApproved}
         />
       );
     }
