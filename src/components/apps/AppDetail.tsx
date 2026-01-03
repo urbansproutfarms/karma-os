@@ -108,6 +108,11 @@ export function AppDetail({
             <div>
               <h1 className="text-xl font-semibold flex items-center gap-2">
                 {app.name}
+                {(app.isInternal || app.lifecycle === 'internal-only') && (
+                  <Badge variant="outline" className="text-muted-foreground">
+                    Internal Module
+                  </Badge>
+                )}
                 {app.isActive && (
                   <Badge variant="default">
                     <Zap className="h-3 w-3 mr-1" />

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { AppIntake, AppStatus, AppOrigin, AppAgentReview, AppAgentFlag, AIAgentType, VercelReadinessChecklist } from '@/types/karma';
+import { AppIntake, AppStatus, AppOrigin, AppAgentReview, AppAgentFlag, AIAgentType, VercelReadinessChecklist, AppLifecycle } from '@/types/karma';
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '@/lib/storage';
 import { useAuditLog } from './useAuditLog';
 
@@ -31,6 +31,8 @@ function normalizeApp(app: Partial<AppIntake>): AppIntake | null {
     riskNotes: app.riskNotes || '',
     status: app.status || 'unreviewed',
     isActive: app.isActive ?? false,
+    isInternal: app.isInternal ?? false,
+    lifecycle: app.lifecycle || 'external',
     ownerConfirmed: app.ownerConfirmed ?? false,
     ownerEntity: app.ownerEntity || 'Clearpath Technologies LLC',
     repoUrl: app.repoUrl || '',
@@ -97,10 +99,31 @@ function migrateGrowOsMetadata(apps: AppIntake[]): { apps: AppIntake[]; wasMigra
   return { apps: migratedApps, wasMigrated };
 }
 
+// Migration to classify ClearPath Launch Dashboard as internal module of KarmaOS
+function migrateClearpathLaunchDashboard(apps: AppIntake[]): { apps: AppIntake[]; wasMigrated: boolean } {
+  let wasMigrated = false;
+  
+  const migratedApps = apps.map(app => {
+    if (app.name === 'ClearPath Launch Dashboard' && !app.isInternal) {
+      wasMigrated = true;
+      return {
+        ...app,
+        isInternal: true,
+        lifecycle: 'internal-only' as AppLifecycle,
+        description: 'Internal view for launch readiness within KarmaOS',
+        updatedAt: new Date().toISOString(),
+      };
+    }
+    return app;
+  });
+  
+  return { apps: migratedApps, wasMigrated };
+}
+
 // Initial seed data for Clearpath apps
 const SEED_APPS: Omit<AppIntake, 'id' | 'createdAt' | 'updatedAt'>[] = [
-  { name: 'KarmaOS', origin: 'lovable', description: 'Internal founder operating system for governance, compliance, and launch control', intendedUser: 'Founder', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
-  { name: 'ClearPath Launch Dashboard', origin: 'lovable', description: 'Internal dashboard showing launch readiness and compliance status of ClearPath apps', intendedUser: 'Founder', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
+  { name: 'KarmaOS', origin: 'lovable', description: 'Internal founder operating system for governance, compliance, and launch control', intendedUser: 'Founder', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, isInternal: false, lifecycle: 'external', ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
+  { name: 'ClearPath Launch Dashboard', origin: 'lovable', description: 'Internal view for launch readiness within KarmaOS', intendedUser: 'Founder', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, isInternal: true, lifecycle: 'internal-only', ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
   { name: 'Plant Air IQ', origin: 'other', description: 'Provides informational plant references related to indoor air quality', intendedUser: 'Consumers', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'yellow' },
   { name: 'Plant Lens', origin: 'rork', description: 'Image-based plant identification and reference tool', intendedUser: 'Consumers', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'yellow' },
   { name: 'Grow OS', origin: 'other', category: 'Informational / Utility (Gardening)', description: 'Garden and plant-focused application providing informational tools, references, and AI-assisted features related to gardening and plants.', intendedUser: 'Gardeners, growers, and plant enthusiasts.', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green', repoUrl: 'https://github.com/urbansproutfarms/thegoodgarden' },
@@ -148,14 +171,16 @@ export function useApps() {
         
       if (normalized.length > 0) {
           // Run Grow OS migration on existing data
-          const { apps: migratedApps, wasMigrated } = migrateGrowOsMetadata(normalized);
-          loadedApps = migratedApps;
+          const { apps: growOsMigrated, wasMigrated: growOsWasMigrated } = migrateGrowOsMetadata(normalized);
           
-          // If migration occurred, log it
-          if (wasMigrated) {
+          // Run ClearPath Launch Dashboard migration
+          const { apps: clearpathMigrated, wasMigrated: clearpathWasMigrated } = migrateClearpathLaunchDashboard(growOsMigrated);
+          loadedApps = clearpathMigrated;
+          
+          // If Grow OS migration occurred, log it
+          if (growOsWasMigrated) {
             const growOs = loadedApps.find(a => a.name === 'Grow OS');
             if (growOs) {
-              // We'll log this after state is set
               setTimeout(() => {
                 logActivity(
                   'Corrected Grow OS dashboard metadata (garden app)',
@@ -173,12 +198,27 @@ export function useApps() {
             }
           }
           
+          // If ClearPath Launch Dashboard migration occurred, log it
+          if (clearpathWasMigrated) {
+            const clearpath = loadedApps.find(a => a.name === 'ClearPath Launch Dashboard');
+            if (clearpath) {
+              setTimeout(() => {
+                logActivity(
+                  'Merged ClearPath Launch Dashboard into KarmaOS as internal module',
+                  'app',
+                  clearpath.id,
+                  'system',
+                  {
+                    isInternal: true,
+                    lifecycle: 'internal-only',
+                    description: 'Internal view for launch readiness within KarmaOS',
+                  }
+                );
+              }, 0);
+            }
+          }
+          
           // Save normalized/migrated data back to storage
-          setStorageItem(STORAGE_KEYS.APPS, loadedApps);
-        } else {
-          // All data was corrupt - reseed
-          wasReset = true;
-          loadedApps = createSeededApps();
           setStorageItem(STORAGE_KEYS.APPS, loadedApps);
         }
       } else {
@@ -521,10 +561,13 @@ export function useApps() {
     logActivity('vercel_readiness_updated', 'app', appId, 'founder', { updated: true });
   }, [updateApp, logActivity]);
 
-  // Check if app is launch-approved (green + all Vercel checklist + no unacknowledged flags)
+  // Check if app is launch-approved (green + all Vercel checklist + no unacknowledged flags + not internal)
   const isLaunchApproved = useCallback((appId: string): boolean => {
     const app = apps.find(a => a.id === appId);
     if (!app) return false;
+    
+    // Internal modules are never launch-eligible
+    if (app.isInternal || app.lifecycle === 'internal-only') return false;
     
     const isGreen = app.trafficLight === 'green';
     const checklist = app.vercelReadiness;
@@ -534,10 +577,15 @@ export function useApps() {
     return isGreen && allChecklistComplete && noUnackedFlags;
   }, [apps, hasUnacknowledgedFlags]);
 
-  // Get all launch-approved apps
+  // Get all launch-approved apps (excludes internal modules)
   const getLaunchApprovedApps = useCallback((): AppIntake[] => {
-    return apps.filter(a => isLaunchApproved(a.id));
+    return apps.filter(a => !a.isInternal && a.lifecycle !== 'internal-only' && isLaunchApproved(a.id));
   }, [apps, isLaunchApproved]);
+
+  // Get launchable apps only (excludes internal modules)
+  const getLaunchableApps = useCallback((): AppIntake[] => {
+    return apps.filter(a => !a.isInternal && a.lifecycle !== 'internal-only');
+  }, [apps]);
 
   return {
     apps,
@@ -558,5 +606,6 @@ export function useApps() {
     updateVercelReadiness,
     isLaunchApproved,
     getLaunchApprovedApps,
+    getLaunchableApps,
   };
 }

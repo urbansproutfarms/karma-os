@@ -263,6 +263,9 @@ export interface VercelReadinessChecklist {
   readyForVercelDeployment: boolean;
 }
 
+// App Lifecycle Type
+export type AppLifecycle = 'external' | 'internal-only';
+
 export interface AppIntake {
   id: string;
   name: string;
@@ -276,6 +279,9 @@ export interface AppIntake {
   riskNotes: string;
   status: AppStatus;
   isActive: boolean; // Only ONE app can be active at a time
+  // Governance Classification
+  isInternal?: boolean; // True = internal module, not a launchable app
+  lifecycle?: AppLifecycle; // 'external' = launchable, 'internal-only' = not launchable
   // IP & Ownership
   ownerConfirmed: boolean;
   ownerEntity: string; // Default: "Clearpath Technologies LLC"

@@ -28,11 +28,14 @@ function getVercelScore(checklist?: VercelReadinessChecklist): { complete: numbe
 export function LaunchDashboard({ apps, onAppClick, isLaunchApproved, dataWasReset }: LaunchDashboardProps) {
   const [filter, setFilter] = useState<'all' | 'launch-approved'>('all');
   
-  const greenApps = apps.filter(a => a.trafficLight === 'green');
-  const yellowApps = apps.filter(a => a.trafficLight === 'yellow');
-  const redApps = apps.filter(a => a.trafficLight === 'red');
-  const unclassifiedApps = apps.filter(a => !a.trafficLight);
-  const launchApprovedApps = apps.filter(a => isLaunchApproved(a.id));
+  // Filter out internal modules - they're not launchable
+  const launchableApps = apps.filter(a => !a.isInternal && a.lifecycle !== 'internal-only');
+  
+  const greenApps = launchableApps.filter(a => a.trafficLight === 'green');
+  const yellowApps = launchableApps.filter(a => a.trafficLight === 'yellow');
+  const redApps = launchableApps.filter(a => a.trafficLight === 'red');
+  const unclassifiedApps = launchableApps.filter(a => !a.trafficLight);
+  const launchApprovedApps = launchableApps.filter(a => isLaunchApproved(a.id));
 
   return (
     <div className="w-full min-w-0 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8">
@@ -247,14 +250,14 @@ export function LaunchDashboard({ apps, onAppClick, isLaunchApproved, dataWasRes
       )}
 
       {/* Empty State */}
-      {apps.length === 0 && (
+      {launchableApps.length === 0 && (
         <div className="text-center py-16">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-muted/50 mb-4">
             <Gauge className="h-8 w-8 text-muted-foreground/50" />
           </div>
-          <h3 className="font-semibold text-lg mb-2">No apps registered</h3>
+          <h3 className="font-semibold text-lg mb-2">No launchable apps registered</h3>
           <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-            Register apps in App Governance to see launch readiness.
+            Register apps in App Governance to see launch readiness. Internal modules are not shown here.
           </p>
         </div>
       )}
