@@ -50,13 +50,60 @@ function normalizeApp(app: Partial<AppIntake>): AppIntake | null {
   };
 }
 
+// Canonical Grow OS metadata - single source of truth
+const GROW_OS_CANONICAL = {
+  description: 'Garden and plant-focused application providing informational tools, references, and AI-assisted features related to gardening and plants.',
+  intendedUser: 'Gardeners, growers, and plant enthusiasts.',
+  category: 'Informational / Utility (Gardening)',
+  origin: 'other' as AppOrigin, // GitHub (migrated from Google AI Studio)
+  repoUrl: 'https://github.com/urbansproutfarms/thegoodgarden',
+};
+
+// One-time migration to fix Grow OS metadata in stored data
+function migrateGrowOsMetadata(apps: AppIntake[]): { apps: AppIntake[]; wasMigrated: boolean } {
+  let wasMigrated = false;
+  
+  const migratedApps = apps.map(app => {
+    // Match Grow OS by name
+    if (app.name === 'Grow OS') {
+      // Check if metadata is stale (contains "personal growth" or "reflection" patterns)
+      const hasStaleDescription = 
+        app.description.toLowerCase().includes('personal growth') ||
+        app.description.toLowerCase().includes('reflection') ||
+        app.description.toLowerCase().includes('self-improvement');
+      
+      const hasWrongCategory = 
+        !app.category?.toLowerCase().includes('garden') &&
+        !app.category?.toLowerCase().includes('plant');
+      
+      const needsMigration = hasStaleDescription || hasWrongCategory || !app.repoUrl;
+      
+      if (needsMigration) {
+        wasMigrated = true;
+        return {
+          ...app,
+          description: GROW_OS_CANONICAL.description,
+          intendedUser: GROW_OS_CANONICAL.intendedUser,
+          category: GROW_OS_CANONICAL.category,
+          origin: GROW_OS_CANONICAL.origin,
+          repoUrl: GROW_OS_CANONICAL.repoUrl,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+    }
+    return app;
+  });
+  
+  return { apps: migratedApps, wasMigrated };
+}
+
 // Initial seed data for Clearpath apps
 const SEED_APPS: Omit<AppIntake, 'id' | 'createdAt' | 'updatedAt'>[] = [
   { name: 'KarmaOS', origin: 'lovable', description: 'Internal founder operating system for governance, compliance, and launch control', intendedUser: 'Founder', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
   { name: 'ClearPath Launch Dashboard', origin: 'lovable', description: 'Internal dashboard showing launch readiness and compliance status of ClearPath apps', intendedUser: 'Founder', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
   { name: 'Plant Air IQ', origin: 'other', description: 'Provides informational plant references related to indoor air quality', intendedUser: 'Consumers', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'yellow' },
   { name: 'Plant Lens', origin: 'rork', description: 'Image-based plant identification and reference tool', intendedUser: 'Consumers', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'yellow' },
-  { name: 'Grow OS', origin: 'other', description: 'Garden and plant-focused application providing informational tools, references, and AI-assisted features related to gardening and plants', intendedUser: 'Gardeners, growers, and plant enthusiasts', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green', repoUrl: 'https://github.com/urbansproutfarms/thegoodgarden' },
+  { name: 'Grow OS', origin: 'other', category: 'Informational / Utility (Gardening)', description: 'Garden and plant-focused application providing informational tools, references, and AI-assisted features related to gardening and plants.', intendedUser: 'Gardeners, growers, and plant enthusiasts.', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green', repoUrl: 'https://github.com/urbansproutfarms/thegoodgarden' },
   { name: 'Forward OS', origin: 'lovable', description: 'Future-oriented planning and reflection tool', intendedUser: 'Individuals', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
   { name: 'Unlock OS', origin: 'lovable', description: 'Self-guided reflection tool focused on unlocking personal insights', intendedUser: 'Individuals', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
   { name: 'Conscious Co-Pilot', origin: 'other', description: 'AI-assisted reflection and orientation companion', intendedUser: 'Individuals', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'yellow' },
@@ -99,9 +146,34 @@ export function useApps() {
           .map((app: unknown) => normalizeApp(app as Partial<AppIntake>))
           .filter((app): app is AppIntake => app !== null);
         
-        if (normalized.length > 0) {
-          loadedApps = normalized;
-          // Save normalized data back to storage
+      if (normalized.length > 0) {
+          // Run Grow OS migration on existing data
+          const { apps: migratedApps, wasMigrated } = migrateGrowOsMetadata(normalized);
+          loadedApps = migratedApps;
+          
+          // If migration occurred, log it
+          if (wasMigrated) {
+            const growOs = loadedApps.find(a => a.name === 'Grow OS');
+            if (growOs) {
+              // We'll log this after state is set
+              setTimeout(() => {
+                logActivity(
+                  'Corrected Grow OS dashboard metadata (garden app)',
+                  'app',
+                  growOs.id,
+                  'system',
+                  {
+                    description: GROW_OS_CANONICAL.description,
+                    intendedUser: GROW_OS_CANONICAL.intendedUser,
+                    category: GROW_OS_CANONICAL.category,
+                    repoUrl: GROW_OS_CANONICAL.repoUrl,
+                  }
+                );
+              }, 0);
+            }
+          }
+          
+          // Save normalized/migrated data back to storage
           setStorageItem(STORAGE_KEYS.APPS, loadedApps);
         } else {
           // All data was corrupt - reseed
