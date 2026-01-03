@@ -300,11 +300,19 @@ export interface AppModulesPresent {
   monthlyArchive?: boolean;
 }
 
+// App source type (where the app is sourced from)
+export type AppSource = 'lovable' | 'github' | 'rork' | 'google_ai_studio' | 'manual' | 'other';
+
+// Build priority for internal tooling
+export type BuildPriority = 'first' | 'second' | 'third' | 'deferred';
+
 export interface AppIntake {
   id: string;
   name: string;
+  displayName?: string; // Display name (e.g., "System Builder OS" for "systembuilderOS")
   alias?: string; // Alternative name (e.g., "Farmers Almanac" for "New Farmers Almanac")
   origin: AppOrigin;
+  source?: AppSource; // Where the app is sourced from (GitHub, Lovable, etc.)
   category?: string; // e.g., "Informational / Utility (Gardening/Farming)"
   productType?: string; // e.g., "Volunteer Readiness / Trust & Access"
   description: string;
@@ -317,6 +325,9 @@ export interface AppIntake {
   // Governance Classification
   isInternal?: boolean; // True = internal module, not a launchable app
   lifecycle?: AppLifecycle; // 'external' = launchable, 'internal-only' = not launchable
+  excludeFromLaunchMetrics?: boolean; // If true, excluded from launch metrics
+  excludeFromPublicLists?: boolean; // If true, excluded from public lists
+  buildPriority?: BuildPriority; // Build priority for internal tooling
   // IP & Ownership
   ownerConfirmed: boolean;
   ownerEntity: string; // Default: "Clearpath Technologies LLC"

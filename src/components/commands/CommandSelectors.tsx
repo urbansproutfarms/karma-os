@@ -31,7 +31,7 @@ const TYPES: { value: CommandType; label: string; description: string }[] = [
   { value: 'pwa', label: 'PWA', description: 'PWA/installability setup' },
   { value: 'deploy', label: 'Deploy', description: 'Deployment steps' },
   { value: 'verify', label: 'Verify', description: 'Verification checklist' },
-  { value: 'sync', label: 'Sync', description: 'Sync state across tools' },
+  { value: 'sync', label: 'Sync', description: 'Sync repo → Lovable' },
 ];
 
 export function CommandSelectors({
@@ -73,7 +73,10 @@ export function CommandSelectors({
                         app.trafficLight === 'yellow' ? 'bg-yellow-500' : 'bg-red-500'
                       }`}
                     />
-                    {app.name}
+                    {app.displayName || app.name}
+                    {app.isInternal && (
+                      <span className="text-xs text-muted-foreground">(Internal)</span>
+                    )}
                   </span>
                 </SelectItem>
               ))}
