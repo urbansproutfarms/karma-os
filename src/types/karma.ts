@@ -318,7 +318,7 @@ export interface AppAgentFlag {
 export interface ActivityLog {
   id: string;
   action: string;
-  entityType: 'idea' | 'project' | 'spec' | 'task' | 'contributor' | 'agreement' | 'agent_action' | 'evaluation' | 'app';
+  entityType: 'idea' | 'project' | 'spec' | 'task' | 'contributor' | 'agreement' | 'agent_action' | 'evaluation' | 'app' | 'command';
   entityId: string;
   userId: string;
   timestamp: string;
@@ -377,4 +377,23 @@ export interface QuestionnaireResponse {
   contributorId: string;
   responses: Record<string, string>;
   submittedAt: string;
+}
+
+// Command Center Types
+export type CommandTarget = 'lovable' | 'github' | 'rork' | 'vercel';
+export type CommandType = 'repair' | 'pwa' | 'deploy' | 'verify' | 'sync';
+export type CommandStatus = 'draft' | 'copied' | 'completed' | 'skipped';
+
+export interface Command {
+  id: string;
+  appId: string;
+  appName: string;
+  target: CommandTarget;
+  type: CommandType;
+  title: string;
+  objective: string;
+  generatedPrompt: string;
+  createdAt: string;
+  status: CommandStatus;
+  notes?: string;
 }

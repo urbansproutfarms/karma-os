@@ -9,6 +9,7 @@ import { AgreementRegistry, AccessTiersPanel, MVPChecklist, MVPBuildOrder, Opera
 import { EvaluationList, EvaluationDetail } from '@/components/evaluations';
 import { AppList } from '@/components/apps';
 import { LaunchDashboard } from '@/components/dashboard';
+import { CommandCenter } from '@/components/commands';
 import { useIdeas } from '@/hooks/useIdeas';
 import { useProjects } from '@/hooks/useProjects';
 import { useContributors } from '@/hooks/useContributors';
@@ -19,7 +20,7 @@ import { useApps } from '@/hooks/useApps';
 import { Idea, Contributor, AccessTier, ContributorEvaluation, AppIntake } from '@/types/karma';
 import { useToast } from '@/hooks/use-toast';
 
-type View = 'dashboard' | 'ideas' | 'projects' | 'specs' | 'tasks' | 'team' | 'agents' | 'agreements' | 'tiers' | 'guardrails' | 'mvp' | 'build-order' | 'design' | 'integrations' | 'audit' | 'evaluations' | 'apps';
+type View = 'dashboard' | 'command-center' | 'ideas' | 'projects' | 'specs' | 'tasks' | 'team' | 'agents' | 'agreements' | 'tiers' | 'guardrails' | 'mvp' | 'build-order' | 'design' | 'integrations' | 'audit' | 'evaluations' | 'apps';
 type IdeaView = 'list' | 'wizard' | 'detail';
 type TeamView = 'list' | 'onboarding' | 'detail';
 type EvaluationView = 'list' | 'detail';
@@ -86,6 +87,17 @@ const Index = () => {
           dataWasReset={dataWasReset}
         />
       );
+    }
+
+    if (currentView === 'command-center') {
+      if (appsLoading) {
+        return (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        );
+      }
+      return <CommandCenter apps={apps ?? []} />;
     }
 
     if (currentView === 'ideas') {

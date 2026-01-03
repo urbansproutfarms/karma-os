@@ -14,7 +14,8 @@ import {
   BookOpen,
   Activity,
   Package,
-  Gauge
+  Gauge,
+  Terminal
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -28,6 +29,7 @@ interface SidebarProps {
 
 const navigation = [
   { id: 'dashboard', label: 'Launch Dashboard', icon: Gauge },
+  { id: 'command-center', label: 'Command Center', icon: Terminal },
   { id: 'apps', label: 'App Governance', icon: Package },
   { id: 'ideas', label: 'Ideas', icon: Lightbulb },
   { id: 'projects', label: 'Projects', icon: FolderKanban },
