@@ -233,6 +233,7 @@ const SEED_APPS: Omit<AppIntake, 'id' | 'createdAt' | 'updatedAt'>[] = [
     ownerConfirmed: false,
     ownerEntity: 'Clearpath Technologies LLC',
     repoUrl: '', // Placeholder - user should paste GitHub URL
+    route: '/systembuilderos',
     assetOwnershipConfirmed: false,
     agentReviewComplete: false,
     trafficLight: 'yellow',
@@ -254,6 +255,7 @@ const SEED_APPS: Omit<AppIntake, 'id' | 'createdAt' | 'updatedAt'>[] = [
     lifecycle: 'external',
     ownerConfirmed: false, 
     ownerEntity: 'ClearPath Technologies', 
+    route: '/fieldpassready',
     assetOwnershipConfirmed: false, 
     agentReviewComplete: false, 
     trafficLight: 'yellow',
