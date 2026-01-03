@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { AppIntake, AppStatus, AppOrigin, VercelReadinessChecklist, DataLayerType, DATA_LAYER_LABELS } from '@/types/karma';
+import { AppIntake, AppStatus, AppOrigin, VercelReadinessChecklist, DataLayerType, DATA_LAYER_LABELS, AppLifecycle } from '@/types/karma';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,8 @@ interface QuickRegisterEntry {
   purpose: string;
   initialStatus: TrafficLight;
 }
+
+type AppFilter = 'products' | 'all';
 
 // Calculate blocker count for an app
 function getBlockerCount(app: AppIntake): number {
@@ -60,6 +62,7 @@ interface AppListProps {
   onAcknowledgeFlag: (appId: string, flagId: string, reviewType: 'productSpecReview' | 'riskIntegrityReview') => void;
   onUpdateVercelReadiness?: (appId: string, checklist: VercelReadinessChecklist) => void;
   onUpdateDataLayer?: (appId: string, dataLayer: DataLayerType) => void;
+  onUpdateLifecycle?: (appId: string, lifecycle: AppLifecycle) => void;
   canProceedToBuild: (appId: string) => boolean;
   getActiveApp: () => AppIntake | undefined;
   isLaunchApproved?: (appId: string) => boolean;
@@ -78,6 +81,7 @@ export function AppList({
   onAcknowledgeFlag,
   onUpdateVercelReadiness,
   onUpdateDataLayer,
+  onUpdateLifecycle,
   canProceedToBuild,
   getActiveApp,
   isLaunchApproved,
@@ -86,6 +90,7 @@ export function AppList({
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<AppStatus | 'all'>('all');
   const [sortMode, setSortMode] = useState<SortMode>('default');
+  const [appFilter, setAppFilter] = useState<AppFilter>('products');
 
   const activeApp = getActiveApp();
   const selectedApp = apps.find(a => a.id === selectedAppId);
@@ -102,7 +107,12 @@ export function AppList({
 
   // Get filtered and sorted apps
   const getFilteredApps = useMemo(() => {
-    let filtered = activeTab === 'all' ? apps : apps.filter(a => a.status === activeTab);
+    // First filter by products vs all
+    let baseApps = appFilter === 'products' 
+      ? apps.filter(a => !a.isInternal && a.lifecycle !== 'internal-only')
+      : apps;
+    
+    let filtered = activeTab === 'all' ? baseApps : baseApps.filter(a => a.status === activeTab);
     
     if (sortMode === 'launch-sprint') {
       // Sort by launch readiness: 🚀 Launch-Approved → Green → Yellow (fewest blockers) → Red
@@ -127,12 +137,21 @@ export function AppList({
     }
     
     return filtered;
-  }, [apps, activeTab, sortMode]);
+  }, [apps, activeTab, sortMode, appFilter]);
+
+  // Get counts based on current filter
+  const filteredBaseApps = useMemo(() => {
+    return appFilter === 'products'
+      ? apps.filter(a => !a.isInternal && a.lifecycle !== 'internal-only')
+      : apps;
+  }, [apps, appFilter]);
 
   const getTabCount = (status: AppStatus | 'all') => {
-    if (status === 'all') return apps.length;
-    return apps.filter(a => a.status === status).length;
+    if (status === 'all') return filteredBaseApps.length;
+    return filteredBaseApps.filter(a => a.status === status).length;
   };
+  
+  const internalCount = apps.filter(a => a.isInternal || a.lifecycle === 'internal-only').length;
 
   if (viewMode === 'create') {
     return (
@@ -169,6 +188,7 @@ export function AppList({
         onAcknowledgeFlag={onAcknowledgeFlag}
         onUpdateVercelReadiness={onUpdateVercelReadiness}
         onUpdateDataLayer={onUpdateDataLayer}
+        onUpdateLifecycle={onUpdateLifecycle}
         canProceedToBuild={canProceedToBuild(selectedApp.id)}
       />
     );
@@ -217,8 +237,27 @@ export function AppList({
         </div>
       )}
 
-      {/* Sort + Tabs */}
-      <div className="flex items-center justify-between">
+      {/* Filter + Sort + Tabs */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Select value={appFilter} onValueChange={(v) => setAppFilter(v as AppFilter)}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Filter..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="products">Products Only</SelectItem>
+              <SelectItem value="all">
+                All Apps ({apps.length})
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          {appFilter === 'products' && internalCount > 0 && (
+            <span className="text-xs text-muted-foreground">
+              ({internalCount} internal hidden)
+            </span>
+          )}
+        </div>
+        
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as AppStatus | 'all')} className="flex-1">
           <TabsList>
             <TabsTrigger value="all" className="flex items-center gap-2">

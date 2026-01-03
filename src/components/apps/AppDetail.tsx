@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AppIntake, AppAgentFlag, VercelReadinessChecklist, DataLayerType, DATA_LAYER_LABELS } from '@/types/karma';
+import { AppIntake, AppAgentFlag, VercelReadinessChecklist, DataLayerType, DATA_LAYER_LABELS, AppLifecycle } from '@/types/karma';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,13 +11,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Package, ArrowLeft, Bot, AlertTriangle, CheckCircle, 
   PauseCircle, XCircle, Zap, Shield, FileText, GitBranch,
-  Check, X, Database
+  Check, X, Database, Globe
 } from 'lucide-react';
 import { RepairPromptCard } from './RepairPromptCard';
 import { VercelReadinessChecklistCard } from './VercelReadinessChecklist';
 import { VercelPWAPromptCard } from './VercelPWAPromptCard';
 import { LaunchPromptsCard } from './LaunchPromptsCard';
 import { DataLayerSelect } from './DataLayerSelect';
+import { LifecycleSelect } from './LifecycleSelect';
 
 interface AppDetailProps {
   app: AppIntake;
@@ -29,6 +30,7 @@ interface AppDetailProps {
   onAcknowledgeFlag: (appId: string, flagId: string, reviewType: 'productSpecReview' | 'riskIntegrityReview') => void;
   onUpdateVercelReadiness?: (appId: string, checklist: VercelReadinessChecklist) => void;
   onUpdateDataLayer?: (appId: string, dataLayer: DataLayerType) => void;
+  onUpdateLifecycle?: (appId: string, lifecycle: AppLifecycle) => void;
   canProceedToBuild: boolean;
 }
 
@@ -48,6 +50,7 @@ export function AppDetail({
   onAcknowledgeFlag,
   onUpdateVercelReadiness,
   onUpdateDataLayer,
+  onUpdateLifecycle,
   canProceedToBuild,
 }: AppDetailProps) {
   const [repoUrl, setRepoUrl] = useState(app.repoUrl || '');
@@ -283,6 +286,28 @@ export function AppDetail({
 
         {/* Sidebar */}
         <div className="space-y-6">
+          {/* Lifecycle */}
+          <Card className="border-border/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Globe className="h-4 w-4" />
+                Lifecycle
+              </CardTitle>
+              <CardDescription>
+                {app.lifecycle === 'internal-only' 
+                  ? 'Internal infrastructure - not eligible for 🚀 launch'
+                  : 'External product - eligible for 🚀 launch'
+                }
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <LifecycleSelect
+                value={app.lifecycle || 'external'}
+                onChange={(lifecycle) => onUpdateLifecycle?.(app.id, lifecycle)}
+              />
+            </CardContent>
+          </Card>
+
           {/* Data Layer */}
           <Card className="border-border/50">
             <CardHeader className="pb-3">

@@ -41,7 +41,7 @@ const Index = () => {
   const { agents, getPendingActions, approveAction, rejectAction } = useAgents();
   const { logs, logActivity } = useAuditLog();
   const { evaluations, updateScore, acknowledgeRiskFlag, makeDecision, confirmTag, removeTag, getContributorQuestionnaire } = useEvaluations();
-  const { apps, isLoading: appsLoading, dataWasReset, createApp, quickRegister, runAgentReview, makeFounderDecision, setActiveApp, confirmOwnership, acknowledgeFlag, canProceedToBuild, getActiveApp, isLaunchApproved, updateVercelReadiness, updateDataLayer } = useApps();
+  const { apps, isLoading: appsLoading, dataWasReset, createApp, quickRegister, runAgentReview, makeFounderDecision, setActiveApp, confirmOwnership, acknowledgeFlag, canProceedToBuild, getActiveApp, isLaunchApproved, updateVercelReadiness, updateDataLayer, updateLifecycle } = useApps();
   const { toast } = useToast();
 
   const handleNewIdea = () => {
@@ -287,6 +287,7 @@ const Index = () => {
           onAcknowledgeFlag={(id, flagId, reviewType) => { acknowledgeFlag(id, flagId, reviewType); }}
           onUpdateVercelReadiness={(id, checklist) => { updateVercelReadiness(id, checklist); }}
           onUpdateDataLayer={(id, dataLayer) => { updateDataLayer(id, dataLayer); toast({ title: 'Data layer updated' }); }}
+          onUpdateLifecycle={(id, lifecycle) => { updateLifecycle(id, lifecycle); toast({ title: 'Lifecycle updated' }); }}
           canProceedToBuild={canProceedToBuild}
           getActiveApp={getActiveApp}
           isLaunchApproved={isLaunchApproved}
