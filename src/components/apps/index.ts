@@ -9,3 +9,5 @@ export { VercelPWAPromptCard } from './VercelPWAPromptCard';
 export { LaunchPromptsCard } from './LaunchPromptsCard';
 export { DataLayerSelect } from './DataLayerSelect';
 export { LifecycleSelect } from './LifecycleSelect';
+export { FieldPassComplianceCard } from './FieldPassComplianceCard';
+export { NextFixPromptCard } from './NextFixPromptCard';

@@ -276,12 +276,37 @@ export const DATA_LAYER_LABELS: Record<DataLayerType, string> = {
   other: 'Other',
 };
 
+// Compliance flags for apps
+export interface AppComplianceFlags {
+  noPayments?: boolean;
+  noRankings?: boolean;
+  noGuarantees?: boolean;
+  safetyFirstOnboarding?: boolean;
+  noMedicalClaims?: boolean;
+  noFinancialClaims?: boolean;
+  noEmploymentClaims?: boolean;
+}
+
+// Module checklist for apps
+export interface AppModulesPresent {
+  welcomeOrientation?: boolean;
+  onboardingWizard?: boolean;
+  volunteerDashboard?: boolean;
+  opportunitiesList?: boolean;
+  opportunityDetail?: boolean;
+  profileCredentials?: boolean;
+  hostDashboard?: boolean;
+  readinessQuiz?: boolean;
+  monthlyArchive?: boolean;
+}
+
 export interface AppIntake {
   id: string;
   name: string;
   alias?: string; // Alternative name (e.g., "Farmers Almanac" for "New Farmers Almanac")
   origin: AppOrigin;
   category?: string; // e.g., "Informational / Utility (Gardening/Farming)"
+  productType?: string; // e.g., "Volunteer Readiness / Trust & Access"
   description: string;
   intendedUser: string;
   mvpScope: string;
@@ -296,7 +321,11 @@ export interface AppIntake {
   ownerConfirmed: boolean;
   ownerEntity: string; // Default: "Clearpath Technologies LLC"
   repoUrl?: string;
+  publishedUrl?: string; // Lovable published URL
   assetOwnershipConfirmed: boolean;
+  // Compliance & Modules (for apps like FieldPass)
+  complianceFlags?: AppComplianceFlags;
+  modulesPresent?: AppModulesPresent;
   // Agent Review
   agentReviewComplete: boolean;
   productSpecReview?: AppAgentReview;

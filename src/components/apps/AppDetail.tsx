@@ -19,6 +19,8 @@ import { VercelPWAPromptCard } from './VercelPWAPromptCard';
 import { LaunchPromptsCard } from './LaunchPromptsCard';
 import { DataLayerSelect } from './DataLayerSelect';
 import { LifecycleSelect } from './LifecycleSelect';
+import { FieldPassComplianceCard } from './FieldPassComplianceCard';
+import { NextFixPromptCard } from './NextFixPromptCard';
 
 interface AppDetailProps {
   app: AppIntake;
@@ -324,6 +326,12 @@ export function AppDetail({
               />
             </CardContent>
           </Card>
+
+          {/* Compliance & Modules (for apps like FieldPass) */}
+          <FieldPassComplianceCard app={app} />
+          
+          {/* Launch Readiness with Next Fix Prompt */}
+          <NextFixPromptCard app={app} />
 
           {/* Launch Prompts */}
           <LaunchPromptsCard app={app} />
