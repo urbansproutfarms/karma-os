@@ -209,7 +209,6 @@ export function AppList({
                 />
               ))}
             </div>
-            </div>
           )}
         </TabsContent>
       </Tabs>
