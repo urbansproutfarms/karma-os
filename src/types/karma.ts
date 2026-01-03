@@ -266,7 +266,9 @@ export interface VercelReadinessChecklist {
 export interface AppIntake {
   id: string;
   name: string;
+  alias?: string; // Alternative name (e.g., "Farmers Almanac" for "New Farmers Almanac")
   origin: AppOrigin;
+  category?: string; // e.g., "Informational / Utility (Gardening/Farming)"
   description: string;
   intendedUser: string;
   mvpScope: string;

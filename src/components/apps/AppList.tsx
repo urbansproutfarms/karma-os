@@ -1,21 +1,49 @@
-import { useState } from 'react';
-import { AppIntake, AppStatus, AppOrigin } from '@/types/karma';
+import { useState, useMemo } from 'react';
+import { AppIntake, AppStatus, AppOrigin, VercelReadinessChecklist } from '@/types/karma';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AppCard } from './AppCard';
 import { AppIntakeForm } from './AppIntakeForm';
 import { AppDetail } from './AppDetail';
 import { QuickRegisterForm } from './QuickRegisterForm';
-import { Plus, Package, Zap, ListPlus } from 'lucide-react';
+import { Plus, Package, Zap, ListPlus, Rocket } from 'lucide-react';
 
 type TrafficLight = 'green' | 'yellow' | 'red';
+type SortMode = 'default' | 'launch-sprint';
 
 interface QuickRegisterEntry {
   name: string;
   source: AppOrigin;
   purpose: string;
   initialStatus: TrafficLight;
+}
+
+// Calculate blocker count for an app
+function getBlockerCount(app: AppIntake): number {
+  let blockers = 0;
+  if (!app.repoUrl) blockers++;
+  if (!app.ownerConfirmed) blockers++;
+  if (!app.agentReviewComplete) blockers++;
+  if (app.productSpecReview?.flags.some(f => !f.acknowledged && f.severity === 'high')) blockers++;
+  if (app.riskIntegrityReview?.flags.some(f => !f.acknowledged && f.severity === 'high')) blockers++;
+  const vercelComplete = app.vercelReadiness ? Object.values(app.vercelReadiness).filter(Boolean).length : 0;
+  if (vercelComplete < 6) blockers += (6 - vercelComplete);
+  return blockers;
+}
+
+// Check if fully launch-approved
+function isFullyLaunchApproved(app: AppIntake): boolean {
+  if (app.trafficLight !== 'green') return false;
+  if (!app.vercelReadiness) return false;
+  const allChecked = Object.values(app.vercelReadiness).every(Boolean);
+  if (!allChecked) return false;
+  const hasUnacknowledgedFlags = [
+    ...(app.productSpecReview?.flags.filter(f => !f.acknowledged) || []),
+    ...(app.riskIntegrityReview?.flags.filter(f => !f.acknowledged) || []),
+  ].length > 0;
+  return !hasUnacknowledgedFlags;
 }
 
 interface AppListProps {
@@ -27,7 +55,7 @@ interface AppListProps {
   onSetActive: (appId: string) => void;
   onConfirmOwnership: (appId: string, repoUrl: string) => void;
   onAcknowledgeFlag: (appId: string, flagId: string, reviewType: 'productSpecReview' | 'riskIntegrityReview') => void;
-  onUpdateVercelReadiness?: (appId: string, checklist: import('@/types/karma').VercelReadinessChecklist) => void;
+  onUpdateVercelReadiness?: (appId: string, checklist: VercelReadinessChecklist) => void;
   canProceedToBuild: (appId: string) => boolean;
   getActiveApp: () => AppIntake | undefined;
   isLaunchApproved?: (appId: string) => boolean;
@@ -52,6 +80,7 @@ export function AppList({
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<AppStatus | 'all'>('all');
+  const [sortMode, setSortMode] = useState<SortMode>('default');
 
   const activeApp = getActiveApp();
   const selectedApp = apps.find(a => a.id === selectedAppId);
@@ -66,10 +95,34 @@ export function AppList({
     setViewMode('detail');
   };
 
-  const getFilteredApps = () => {
-    if (activeTab === 'all') return apps;
-    return apps.filter(a => a.status === activeTab);
-  };
+  // Get filtered and sorted apps
+  const getFilteredApps = useMemo(() => {
+    let filtered = activeTab === 'all' ? apps : apps.filter(a => a.status === activeTab);
+    
+    if (sortMode === 'launch-sprint') {
+      // Sort by launch readiness: 🚀 Launch-Approved → Green → Yellow (fewest blockers) → Red
+      filtered = [...filtered].sort((a, b) => {
+        const aLaunchApproved = isFullyLaunchApproved(a);
+        const bLaunchApproved = isFullyLaunchApproved(b);
+        
+        // Launch-approved first
+        if (aLaunchApproved && !bLaunchApproved) return -1;
+        if (!aLaunchApproved && bLaunchApproved) return 1;
+        
+        // Then by traffic light
+        const lightOrder = { green: 1, yellow: 2, red: 3, undefined: 4 };
+        const aLight = lightOrder[a.trafficLight || 'undefined'];
+        const bLight = lightOrder[b.trafficLight || 'undefined'];
+        
+        if (aLight !== bLight) return aLight - bLight;
+        
+        // Within same light, sort by fewest blockers
+        return getBlockerCount(a) - getBlockerCount(b);
+      });
+    }
+    
+    return filtered;
+  }, [apps, activeTab, sortMode]);
 
   const getTabCount = (status: AppStatus | 'all') => {
     if (status === 'all') return apps.length;
@@ -158,31 +211,51 @@ export function AppList({
         </div>
       )}
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as AppStatus | 'all')}>
-        <TabsList>
-          <TabsTrigger value="all" className="flex items-center gap-2">
-            All <Badge variant="secondary">{getTabCount('all')}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="unreviewed" className="flex items-center gap-2">
-            Unreviewed <Badge variant="secondary">{getTabCount('unreviewed')}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="in_review" className="flex items-center gap-2">
-            In Review <Badge variant="secondary">{getTabCount('in_review')}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="approved" className="flex items-center gap-2">
-            Approved <Badge variant="secondary">{getTabCount('approved')}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="paused" className="flex items-center gap-2">
-            Paused <Badge variant="secondary">{getTabCount('paused')}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="killed" className="flex items-center gap-2">
-            Killed <Badge variant="secondary">{getTabCount('killed')}</Badge>
-          </TabsTrigger>
-        </TabsList>
+      {/* Sort + Tabs */}
+      <div className="flex items-center justify-between">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as AppStatus | 'all')} className="flex-1">
+          <TabsList>
+            <TabsTrigger value="all" className="flex items-center gap-2">
+              All <Badge variant="secondary">{getTabCount('all')}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="unreviewed" className="flex items-center gap-2">
+              Unreviewed <Badge variant="secondary">{getTabCount('unreviewed')}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="in_review" className="flex items-center gap-2">
+              In Review <Badge variant="secondary">{getTabCount('in_review')}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="approved" className="flex items-center gap-2">
+              Approved <Badge variant="secondary">{getTabCount('approved')}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="paused" className="flex items-center gap-2">
+              Paused <Badge variant="secondary">{getTabCount('paused')}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="killed" className="flex items-center gap-2">
+              Killed <Badge variant="secondary">{getTabCount('killed')}</Badge>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+        
+        <Select value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Sort by..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="default">Default Order</SelectItem>
+            <SelectItem value="launch-sprint">
+              <span className="flex items-center gap-2">
+                <Rocket className="h-3 w-3" />
+                Launch Sprint
+              </span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-        <TabsContent value={activeTab} className="mt-6">
-          {getFilteredApps().length === 0 ? (
+      {/* App Grid */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as AppStatus | 'all')}>
+        <TabsContent value={activeTab} className="mt-0">
+          {getFilteredApps.length === 0 ? (
             <div className="text-center py-12">
               <Package className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
               <h3 className="font-medium mb-1">No apps found</h3>
@@ -200,7 +273,7 @@ export function AppList({
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {getFilteredApps().map(app => (
+              {getFilteredApps.map(app => (
                 <AppCard 
                   key={app.id} 
                   app={app} 
