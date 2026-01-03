@@ -3,6 +3,51 @@ import { AppIntake, AppStatus, AppOrigin, AppAgentReview, AppAgentFlag, AIAgentT
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '@/lib/storage';
 import { useAuditLog } from './useAuditLog';
 
+// Default Vercel readiness checklist
+const DEFAULT_VERCEL_READINESS: VercelReadinessChecklist = {
+  pwaManifestPresent: false,
+  serviceWorkerRegistered: false,
+  noFalseClaimsOrLegalAmbiguity: false,
+  clearInformationalLanguage: false,
+  errorFreeLoad: false,
+  readyForVercelDeployment: false,
+};
+
+// Schema normalization - ensures all required fields exist with safe defaults
+function normalizeApp(app: Partial<AppIntake>): AppIntake | null {
+  // Must have at least id and name to be valid
+  if (!app.id || !app.name) return null;
+  
+  return {
+    id: app.id,
+    name: app.name,
+    origin: app.origin || 'other',
+    description: app.description || '',
+    intendedUser: app.intendedUser || '',
+    mvpScope: app.mvpScope || '',
+    nonGoals: app.nonGoals || '',
+    riskNotes: app.riskNotes || '',
+    status: app.status || 'unreviewed',
+    isActive: app.isActive ?? false,
+    ownerConfirmed: app.ownerConfirmed ?? false,
+    ownerEntity: app.ownerEntity || 'Clearpath Technologies LLC',
+    repoUrl: app.repoUrl || '',
+    assetOwnershipConfirmed: app.assetOwnershipConfirmed ?? false,
+    agentReviewComplete: app.agentReviewComplete ?? false,
+    productSpecReview: app.productSpecReview,
+    riskIntegrityReview: app.riskIntegrityReview,
+    founderDecision: app.founderDecision,
+    founderDecisionNotes: app.founderDecisionNotes || '',
+    founderDecisionAt: app.founderDecisionAt,
+    founderDecisionBy: app.founderDecisionBy,
+    trafficLight: app.trafficLight,
+    vercelReadiness: app.vercelReadiness || { ...DEFAULT_VERCEL_READINESS },
+    createdAt: app.createdAt || new Date().toISOString(),
+    updatedAt: app.updatedAt || new Date().toISOString(),
+    archivedAt: app.archivedAt,
+  };
+}
+
 // Initial seed data for Clearpath apps
 const SEED_APPS: Omit<AppIntake, 'id' | 'createdAt' | 'updatedAt'>[] = [
   { name: 'KarmaOS', origin: 'lovable', description: 'Internal founder operating system for governance, compliance, and launch control', intendedUser: 'Founder', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'green' },
@@ -20,26 +65,62 @@ const SEED_APPS: Omit<AppIntake, 'id' | 'createdAt' | 'updatedAt'>[] = [
   { name: 'GrowCode Adventures', origin: 'lovable', description: 'Educational content platform for youth and families', intendedUser: 'Youth and families', mvpScope: '', nonGoals: '', riskNotes: '', status: 'unreviewed', isActive: false, ownerConfirmed: false, ownerEntity: 'Clearpath Technologies LLC', assetOwnershipConfirmed: false, agentReviewComplete: false, trafficLight: 'yellow' },
 ];
 
+// Create seeded apps with IDs and timestamps
+function createSeededApps(): AppIntake[] {
+  return SEED_APPS.map(app => ({
+    ...app,
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    repoUrl: app.repoUrl || '',
+    vercelReadiness: { ...DEFAULT_VERCEL_READINESS },
+  }));
+}
+
 export function useApps() {
   const [apps, setApps] = useState<AppIntake[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [dataWasReset, setDataWasReset] = useState(false);
   const { logActivity } = useAuditLog();
 
   useEffect(() => {
-    const stored = getStorageItem<AppIntake[]>(STORAGE_KEYS.APPS);
-    if (stored && stored.length > 0) {
-      setApps(stored);
-    } else {
-      // Seed initial apps if none exist
-      const seeded: AppIntake[] = SEED_APPS.map(app => ({
-        ...app,
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }));
-      setStorageItem(STORAGE_KEYS.APPS, seeded);
-      setApps(seeded);
+    let wasReset = false;
+    let loadedApps: AppIntake[] = [];
+
+    try {
+      const stored = getStorageItem<unknown>(STORAGE_KEYS.APPS);
+      
+      if (stored && Array.isArray(stored) && stored.length > 0) {
+        // Normalize each app - filter out any that fail normalization
+        const normalized = stored
+          .map((app: unknown) => normalizeApp(app as Partial<AppIntake>))
+          .filter((app): app is AppIntake => app !== null);
+        
+        if (normalized.length > 0) {
+          loadedApps = normalized;
+          // Save normalized data back to storage
+          setStorageItem(STORAGE_KEYS.APPS, loadedApps);
+        } else {
+          // All data was corrupt - reseed
+          wasReset = true;
+          loadedApps = createSeededApps();
+          setStorageItem(STORAGE_KEYS.APPS, loadedApps);
+        }
+      } else {
+        // No data - seed initial apps
+        loadedApps = createSeededApps();
+        setStorageItem(STORAGE_KEYS.APPS, loadedApps);
+      }
+    } catch (error) {
+      // JSON parse failed or other error - reset to defaults
+      console.error('Failed to load apps from storage, resetting to defaults:', error);
+      wasReset = true;
+      loadedApps = createSeededApps();
+      setStorageItem(STORAGE_KEYS.APPS, loadedApps);
     }
+
+    setApps(loadedApps);
+    setDataWasReset(wasReset);
     setIsLoading(false);
   }, []);
 
@@ -369,6 +450,7 @@ export function useApps() {
   return {
     apps,
     isLoading,
+    dataWasReset,
     createApp,
     quickRegister,
     updateApp,

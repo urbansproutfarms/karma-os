@@ -3,12 +3,14 @@ import { AppIntake, VercelReadinessChecklist } from '@/types/karma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Gauge, Package, CheckCircle, AlertTriangle, XCircle, Rocket, Cloud } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Gauge, Package, CheckCircle, AlertTriangle, XCircle, Rocket, Cloud, RefreshCw } from 'lucide-react';
 
 interface LaunchDashboardProps {
   apps: AppIntake[];
   onAppClick: (app: AppIntake) => void;
   isLaunchApproved: (appId: string) => boolean;
+  dataWasReset?: boolean;
 }
 
 const TRAFFIC_LIGHT_CONFIG = {
@@ -24,7 +26,7 @@ function getVercelScore(checklist?: VercelReadinessChecklist): { complete: numbe
   return { complete, total: values.length, allComplete: complete === values.length };
 }
 
-export function LaunchDashboard({ apps, onAppClick, isLaunchApproved }: LaunchDashboardProps) {
+export function LaunchDashboard({ apps, onAppClick, isLaunchApproved, dataWasReset }: LaunchDashboardProps) {
   const [filter, setFilter] = useState<'all' | 'launch-approved'>('all');
   
   const greenApps = apps.filter(a => a.trafficLight === 'green');
@@ -37,6 +39,16 @@ export function LaunchDashboard({ apps, onAppClick, isLaunchApproved }: LaunchDa
 
   return (
     <div className="space-y-6">
+      {/* Data Reset Notice */}
+      {dataWasReset && (
+        <Alert className="border-amber-500/50 bg-amber-500/10">
+          <RefreshCw className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-700">
+            App data was recovered from defaults due to storage issues. Your previous customizations may need to be re-entered.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-lg bg-primary/10">
